@@ -6,107 +6,191 @@
 
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
-// Validate input parameters
-WorkflowPooled_screen.initialise(params, log)
-
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+def checkPathParamList = [ params.fastq_dir, params.outdir, params.sample_input_meta_table, params.library ]
+if (params.fastq_dir) {
+    try {
+        ch_input = file(params.fastq_dir, checkIfExists: true)
+    } catch (java.nio.file.NoSuchFileException e) {
+        // return the error message if the path does not exist
+        exit 1, "The folder " + e.getMessage() + " does not exist"
+    } catch (java.nio.file.NotDirectoryException e) {
+        // return the error message if the path is not a directory
+        exit 1, "The path " + e.getMessage() + " is not a directory!"
+    } catch (java.nio.file.AccessDeniedException e) {
+        // return the error message if the path cannot be accessed
+        exit 1, "The folder " + e.getMessage() + " cannot be accessed!"
+    } catch (e) {
+        // return everything else
+        exit 1, "The fastq_dir folder definition failed with following reason " + e
+    }
+} else {
+    exit 1, 'Input fastq_dir not specified!'
+}
+
+if (params.sample_input_meta_table) {
+    try {
+        ch_sample_input_meta_table = file(params.sample_input_meta_table, checkIfExists: true)
+    } catch (java.nio.file.NoSuchFileException e) {
+        // return the error message if the path does not exist
+        exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
+    } catch (java.nio.file.AccessDeniedException e) {
+        // return the error message if the path cannot be accessed
+        exit 1, "The file " + e.getMessage() + " cannot be accessed!"
+    } catch (e) {
+        // return everything else
+        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+    }
+} else {
+    exit 1, 'Input sample_input_meta_table not specified!'
+}
+if (params.library) {
+    try {
+        ch_library = file(params.library, checkIfExists: true)
+    } catch (java.nio.file.NoSuchFileException e) {
+        // return the error message if the path does not exist
+        exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
+    } catch (java.nio.file.AccessDeniedException e) {
+        // return the error message if the path cannot be accessed
+        exit 1, "The file " + e.getMessage() + " cannot be accessed!"
+    } catch (e) {
+        // return everything else
+        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+    }
+} else {
+    exit 1, 'Input library not specified!'
+}
+if (params.prefix) { ch_prefix = params.prefix }
+
+// Since annotate_dictionary is optional, one needs to define as [] to avoid
+// the absence of the channel ch_annotate_dict
+if (params.annotate_dictionary) {
+    try {
+        ch_annotate_dict = file(params.annotate_dictionary, checkIfExists: true)
+    } catch (java.nio.file.NoSuchFileException e) {
+        // return the error message if the path does not exist
+        exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
+    } catch (java.nio.file.AccessDeniedException e) {
+        // return the error message if the path cannot be accessed
+        exit 1, "The file " + e.getMessage() + " cannot be accessed!"
+    } catch (e) {
+        // return everything else
+        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+    }
+} else {
+    ch_annotate_dict = []
+}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-ch_multiqc_config          = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
-ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
-ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT LOCAL MODULES/SUBWORKFLOWS
+    IMPORT LOCAL SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
-
+include { GUIDE_COUNTS_REP } from '../subworkflows/local/guide_counts_rep_subworkflow'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT NF-CORE MODULES/SUBWORKFLOWS
+    IMPORT MODULES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { SAMPLE_META_MODULE } from '../modules/local/sample_meta_module.nf'
+include { MAGECK_REPORT_HTML } from '../modules/local/guide_generate_mageck_report'
+include { GUIDE_CORR_REP_TOTAL } from '../modules/local/guide_correlation_total_table.nf'
+include { GUIDE_COUNT_QC_MODULE } from '../modules/local/guide_count_qc_module.nf'
 
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC                      } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
+include { MAGECK_COUNT 	      	      } from '../modules/pfizer/mageck_pfizer/count/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-// Info required for completion email and summary
-def multiqc_report = []
-
 workflow POOLED_SCREEN {
 
     ch_versions = Channel.empty()
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK (
-        ch_input
+    SAMPLE_META_MODULE (
+        ch_input,
+        ch_sample_input_meta_table,
+        ch_prefix
     )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    // check if SAMPLE_META.out.sample_meta_yaml has multiple read entries
+    SAMPLE_META_MODULE.out.sample_meta_yaml
+        .map { PooledUtils.multipleRead(it) }
+        .set { multi_read }
 
-    //
-    // MODULE: Run FastQC
-    //
-    FASTQC (
-        INPUT_CHECK.out.reads
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    if (multi_read == true && params.count_program == 'mageck') {
+        exit 1, 'MAGECK does not support multiple read files per sample. Please use a different count program.'
+    }
+
+    if (params.count_program == 'mageck') {
+        // store labels and fastqfiles in channels from PooledUtils.get_labels_fastq_list
+
+        SAMPLE_META_MODULE.out.sample_meta_yaml
+            .map { PooledUtils.getSampleLabelFastqMapForMageck(it) }
+            .multiMap{ it ->
+                labels: it[0]
+                fastq_list: it[1]
+            }
+            .set { result }
+        labels = result.labels
+        fastq_list = result.fastq_list
+
+        ch_versions = ch_versions.mix(SAMPLE_META_MODULE.out.versions)
+        // TODO: make sure the multiple read_* is comma separated when building the fastq file input arg
+        MAGECK_COUNT (
+            ch_input,
+            labels,
+            fastq_list,
+            ch_library,
+            ch_prefix
+        )
+        ch_versions = ch_versions.mix(MAGECK_COUNT.out.versions)
+
+        MAGECK_REPORT_HTML (
+            MAGECK_COUNT.out.report,
+            ch_prefix
+        )
+
+        ch_versions = ch_versions.mix(MAGECK_REPORT_HTML.out.versions)
+
+        GUIDE_COUNTS_REP (
+            MAGECK_COUNT.out.count,
+            SAMPLE_META_MODULE.out.sample_meta_yaml,
+            ch_prefix
+        )
+        ch_versions = ch_versions.mix(GUIDE_COUNTS_REP.out.versions)
+    }
+
+    // Ensure the same order of labels, file names and file paths
+    // while creating a list of channels to execute the analysis in parallel
+
+    my_inputs = GUIDE_COUNTS_REP.out.label_list
+                .flatten()
+                .merge(GUIDE_COUNTS_REP.out.label_files.flatten()
+                .merge(GUIDE_COUNTS_REP.out.rep_count_files.flatten())
+                .merge(GUIDE_COUNTS_REP.out.rep_count_files_yml.flatten()))
+
+    GUIDE_COUNT_QC_MODULE (my_inputs, ch_prefix, ch_annotate_dict)
+    ch_versions = ch_versions.mix(GUIDE_COUNT_QC_MODULE.out.versions)
+
+    // merging the *correlation_representation* into one file using collectFile
+    GUIDE_CORR_REP_TOTAL(GUIDE_COUNT_QC_MODULE.out.correlationtables.toList(), ch_prefix)
+    ch_versions = ch_versions.mix(GUIDE_CORR_REP_TOTAL.out.versions)
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
-    //
-    // MODULE: MultiQC
-    //
-    workflow_summary    = WorkflowPooled_screen.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
-
-    methods_description    = WorkflowPooled_screen.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
-    ch_methods_description = Channel.value(methods_description)
-
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
-    MULTIQC (
-        ch_multiqc_files.collect(),
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList()
-    )
-    multiqc_report = MULTIQC.out.report.toList()
 }
 
 /*
@@ -114,17 +198,13 @@ workflow POOLED_SCREEN {
     COMPLETION EMAIL AND SUMMARY
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
 workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
+    if (params.email) {
+        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log)
     }
-    NfcoreTemplate.summary(workflow, params, log)
-    if (params.hook_url) {
-        NfcoreTemplate.IM_notification(workflow, params, summary_params, projectDir, log)
-    }
-}
 
+    NfcoreTemplate.summary(workflow, params, log)
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     THE END

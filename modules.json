@@ -7,17 +7,22 @@
                 "nf-core": {
                     "custom/dumpsoftwareversions": {
                         "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": ["modules"]
-                    },
-                    "fastqc": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": ["modules"]
-                    },
-                    "multiqc": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/custom/dumpsoftwareversions/custom-dumpsoftwareversions.diff"
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {}
+            }
+        },
+        "https://github.com/pfizer-rd/nf-core-modules.git": {
+            "modules": {
+                "pfizer": {
+                    "mageck_pfizer/count": {
+                        "branch": "main",
+                        "git_sha": "2c4fc8df392b2b211ec437e4b5fe7d07dad6889b",
                         "installed_by": ["modules"]
                     }
                 }

@@ -8,13 +8,7 @@ class WorkflowMain {
     // Citation string for pipeline
     //
     public static String citation(workflow) {
-        return "If you use ${workflow.manifest.name} for your analysis please cite:\n\n" +
-            // TODO nf-core: Add Zenodo DOI for pipeline after first release
-            //"* The pipeline\n" +
-            //"  https://doi.org/10.5281/zenodo.XXXXXXX\n\n" +
-            "* The nf-core framework\n" +
-            "  https://doi.org/10.1038/s41587-020-0439-x\n\n" +
-            "* Software dependencies\n" +
+        return "* Software dependencies\n" +
             "  https://github.com/${workflow.manifest.name}/blob/master/CITATIONS.md"
     }
 
@@ -67,7 +61,6 @@ class WorkflowMain {
         if (params.validate_params) {
             NfcoreSchema.validateParameters(workflow, params, log)
         }
-
         // Check that a -profile or Nextflow config has been provided to run the pipeline
         NfcoreTemplate.checkConfigProvided(workflow, log)
 
@@ -79,10 +72,5 @@ class WorkflowMain {
         // Check AWS batch settings
         NfcoreTemplate.awsBatch(workflow, params)
 
-        // Check input has been provided
-        if (!params.input) {
-            log.error "Please provide an input samplesheet to the pipeline e.g. '--input samplesheet.csv'"
-            System.exit(1)
-        }
     }
     }
