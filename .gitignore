@@ -7,3 +7,4 @@ testing/
 testing*
 *.pyc
 pipeline_info
+.nf-test*

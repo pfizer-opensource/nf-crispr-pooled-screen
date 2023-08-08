@@ -1,0 +1,397 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    tag "pipeline"
+    script "main.nf"
+
+    def root_test_folder="test-datasets"  // Note: test data is not included in public release
+
+    test("Main Test") {
+        tag "main"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table.csv"
+                annotate_dictionary        = "${root_test_folder}/input_sample_table/annotate_dict.yml"
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+    test("Multi Character aliquot definition") {
+        tag "multi_aliquot"
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table_aliquot.csv"
+                annotate_dictionary        = "${root_test_folder}/input_sample_table/annotate_dict.yml"
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+    test("Explicit Group definition") {
+        tag "exp_group"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table_defined_group.csv"
+                annotate_dictionary        = "${root_test_folder}/input_sample_table/annotate_dict.yml"
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+    test("No Group definition") {
+        tag "no_group"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table_no_group.csv"
+                annotate_dictionary        = ""
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+    test("One Replicate") {
+        tag "one_repl"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table_one_replicate.csv"
+                annotate_dictionary        = "${root_test_folder}/input_sample_table/annotate_dict.yml"
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert path("${outputDir}/guide/").list().every { f -> ! (f ==~ ".*/${params.prefix}replicate_coor_.*pdf") }
+        }
+    }
+
+    test("Multi grouping definition in the annotate dict") {
+        tag "multi_group_dict"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table.csv"
+                library                    = "${root_test_folder}/library.txt"
+                annotate_dictionary        = "${root_test_folder}/input_sample_table/annotate_dict_multi_definitions.yml"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+    test("No annotate dictionary provided") {
+        tag "no_dict"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${root_test_folder}/testdata"
+                sample_input_meta_table    = "${root_test_folder}/input_sample_table/pipeline_input_table.csv"
+                library                    = "${root_test_folder}/library.txt"
+                outdir                     = "$outputDir"
+                bucket                     = null
+                count_program              = 'mageck'
+                prefix                     = 'test'
+                annotate_dictionary        = ""
+
+                // Mageck options
+                mageck_count_normalization_method   = 'none'
+                mageck_count_options                = '--trim-5 "22,23,24,25,26,28,29,30"'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(
+                path("${outputDir}/sample/${params.prefix}sample_meta.yml"),
+                path("${outputDir}/mageck/${params.prefix}.count_normalized.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count_report.Rmd"),
+                path("${outputDir}/mageck/${params.prefix}.countsummary.txt"),
+                path("${outputDir}/mageck/${params.prefix}.count.txt"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}guide_data_long_shape_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.txt"),
+                path("${outputDir}/guide/${params.prefix}max_1000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_2000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}max_3000.count.yml"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}normalized_count_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}correlation_representation_all.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_1000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_2000.tsv"),
+                path("${outputDir}/guide/${params.prefix}rep_correlation_representation_3000.tsv"),
+                path("${outputDir}/guide/${params.prefix}output_file_map.yml"),
+                ).match()
+            assert (path("${outputDir}/mageck/mageck_count.log").exists())
+            assert (path("${outputDir}/mageck/${params.prefix}mageck_report.nb.html").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_1000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_2000.pdf").exists())
+            assert (path("${outputDir}/guide/${params.prefix}replicate_coor_3000.pdf").exists())
+        }
+
+    }
+
+}

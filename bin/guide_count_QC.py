@@ -127,7 +127,7 @@ class CountRepr:
         #Normalize guide counts and add pseudocount (1 per million reads) to
         # avoid divide by zero errors
         def normalize_col(col:pd.DataFrame):
-            return col.div(col.sum()) * 1000000 +1
+            return col.div(col.sum()) * 1000000 + 1
 
         #cast base_columns to tuple
         base_columns=tuple(base_columns)
@@ -313,19 +313,19 @@ class CountRepr:
         """
         Export normalized counts and and long shaped table
         """
-        self.table_count.to_csv(
+        self.table_count.round(6).to_csv(
             f'{prefix}normalized_count_representation_{repr}.tsv',
             sep="\t",
             index=False
         )
 
-        self.long_shape.to_csv(
+        self.long_shape.round(6).to_csv(
             f'{prefix}guide_data_long_shape_representation_{repr}.tsv',
             sep="\t",
             index=False
         )
 
-        self.replicate_cor.to_csv(
+        self.replicate_cor.round(6).to_csv(
             f'{prefix}rep_correlation_representation_{repr}.tsv',
             sep="\t",
             index=False
