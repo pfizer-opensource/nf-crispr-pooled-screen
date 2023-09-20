@@ -1,9 +1,9 @@
 process CUSTOM_DUMPSOFTWAREVERSIONS {
     label 'process_single'
 
-    // Requires `pyyaml` which does not have a dedicated container but is in the MultiQC container
+    // Requires `pyyaml` which does not have a dedicated container but is in the functional_genomics container
     
-    container "artifacts.example.com/nextflow/multiqc:v1.14"
+    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
 
     input:
     path versions

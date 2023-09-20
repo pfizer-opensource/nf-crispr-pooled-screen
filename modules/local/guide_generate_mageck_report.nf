@@ -23,7 +23,7 @@ process MAGECK_REPORT_HTML {
     Rscript -e "library(ggplot2);\\
                 library(tidyr);\\
                 rmarkdown::render(\\"\${report}\\",
-                    output_file=\\"${prefix}mageck_report.html\\",
+                    output_file=\\"${prefix}.mageck_count_report.nb.html\\",
                     output_dir=getwd(),
                     quiet=TRUE)"
 

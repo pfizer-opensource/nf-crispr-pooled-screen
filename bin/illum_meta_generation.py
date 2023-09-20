@@ -8,14 +8,16 @@ import pandas as pd
 import re
 import sys
 import yaml
-
+import csv
 
 logger = logging.getLogger(os.path.basename(__file__))
 
 REQUIRE_COLUMNS = ["sample", "replicate", "aliquot",
                     "representation","group"]
-# Same as above, but his columns need to be tested as prefix
-REQUIRE_COLUMNS_PREFIX= ["condition_"]
+list_defaults=["points_of_contact","point_of_contact","experiment_name","experiment_date","user","user_name","user_email","biology_poc","other_poc","analysis_poc","project_name","project_code","department","guide_library"]
+
+REQUIRE_COLUMNS_PREFIX= ["condition|"]
+OPTIONAL_COLUMNS_PREFIX= ["reference|"]
 
 def parse_args(argv=None):
     """Define and immediately parse command line arguments."""
@@ -62,9 +64,22 @@ def get_fastq_list_from_dir(fastq_dir):
 
 # import csv file and parse with pandas
 # docs string in google format
-def build_metadata(my_fastq_list,csv_file):
-    """Load the sample meta data table csv file into a pandas dataframe"""
+def buid_experiment_metadata(lst_pooled,list_defaults):
+    experiment_meta={}
+    for g in lst_pooled:
+        if g[0]!=None and g[0]!='' and len(g[0]) > 0:
+            if g[0].lower() in list_defaults:
+                g_0=g[0].lower()
+                g_1=g[1]
+            else:
+                g_0=g[0]
+                g_1=g[1]
+            experiment_meta[g_0]=g_1
+    return experiment_meta
 
+def build_sample_metadata(my_fastq_list,meta_data_file):
+    """Load the sample meta data table csv file into a pandas dataframe"""
+    
     def _define_group(sample):
             # Get the group name based on the conditions
             group = '_'.join((f"{k.capitalize()}_{cond}"
@@ -76,7 +91,6 @@ def build_metadata(my_fastq_list,csv_file):
         # check if the sample_meta with a particular group has the same conditions
         groups = []
         num_conditions = len(list(sample_meta.values())[0]['conditions'].keys())
-
         for sample in sample_meta.values():
             if sample['group'] not in groups:
                 groups.append(sample['group'])
@@ -87,16 +101,18 @@ def build_metadata(my_fastq_list,csv_file):
             for sample in sample_meta.values():
                 if sample['group'] == group:
                     conditions = conditions + list((sample['conditions'].values()))
+           
             # get the unique conditions
-            condition_unique = list(set(conditions))
+            condition_unique = list(set(conditions[i]['value'] for i in range(num_conditions)))
             #check if condition_unique has more elements than number of conditions keys
+            
             if len(condition_unique) != num_conditions:
                 return False
             condition_groups.append(condition_unique)
 
         # Assuming that one condition per group. If not, return error
         # unique values of list of lists
-        unique_condition_groups = list(set(tuple(x) for x in condition_groups))
+        unique_condition_groups = list(set(tuple(x) for x in condition_groups))   
         if len(unique_condition_groups) != len(groups):
             return False
 
@@ -126,9 +142,9 @@ def build_metadata(my_fastq_list,csv_file):
 
     def _define_group_rep(sample,row):
         return f"{row['group']}.rep_{row['replicate']}"
-
-    meta_data = pd.read_csv(csv_file)
-
+    
+   # meta_data = pd.read_csv(meta_data_file)
+    meta_data = meta_data_file
     # extract columns names into a list
     columns = meta_data.columns.tolist()
 
@@ -147,7 +163,8 @@ def build_metadata(my_fastq_list,csv_file):
             )
 
     # construct a dictionary with main key as sample name and value as a dictionary with the rest of the columns
-    sample_meta = {}
+    
+    sample_meta={}
     for index, row in meta_data.iterrows():
         sample = row['sample']
 
@@ -164,21 +181,43 @@ def build_metadata(my_fastq_list,csv_file):
         sample_meta[sample]['replicate'] = row['replicate']
         sample_meta[sample]['aliquot'] = row['aliquot']
         sample_meta[sample]['representation'] = row['representation']
-        # Store any other column value not in REQUIRE_COLUMNS or REQUIRE_COLUMNS_PREFIX
+        # Store any other column value not in REQUIRE_COLUMNS or REQUIRE_COLUMNS_PREFIX or OPTIONAL_COLUMNS_PREFIX
         # Merge the 2 dictionaries.
         sample_meta[sample] =  sample_meta[sample] | dict([(column,row[column])
                                     for column in columns
                                     if column not in REQUIRE_COLUMNS and
                                     not any([column.startswith(prefix)
-                                    for prefix in REQUIRE_COLUMNS_PREFIX])]
+                                    for prefix in REQUIRE_COLUMNS_PREFIX])
+                                    and not any([column.startswith(prefix)
+                                    for prefix in OPTIONAL_COLUMNS_PREFIX])]
                                     )
         # set the condition as a dictionary with the columns that have the
         # prefix 'condition_', where key is the column name without prefix and
         # value is the value of the column
-        sample_meta[sample]['conditions'] = {
-            x.replace('condition_', ''): row[x] for x in columns if x.startswith('condition_')
-        }
-
+      
+        sample_meta[sample]['conditions'] = {}
+        for x in columns:
+            if row[x]==None or pd.isna(row[x]) or row[x]=='':
+                row[x]=None
+            if x.startswith('condition|'):
+                value=row[x]
+                x=x.replace('condition|', '')
+                x_dict={}
+                x_dict['value']=value
+                if re.search(r'\(\w+\)', x):
+                    unit = re.sub(r'[\(\)]', '', re.search(r'\(\w+\)', x).group()).strip()
+                    y=re.sub(r'\(\w+\)', '',x).strip()
+                else:
+                    unit=None
+                    y=x
+                x_dict['unit']=unit
+                sample_meta[sample]['conditions'][y]=x_dict
+                
+        # set the reference as a dictionary with the columns that have different cases
+        if any([x.startswith('reference|') for x in columns]):
+            sample_meta[sample]['reference'] = {
+                x.replace('reference|', ''): row[x] for x in columns if x.startswith('reference|')
+            }
         sample_meta[sample]['group'] = _extract_group(sample_meta[sample],row)
         sample_meta[sample]['group_rep'] = _define_group_rep(sample_meta[sample],row)
 
@@ -191,24 +230,29 @@ def build_metadata(my_fastq_list,csv_file):
             filename_parse = parse_fastq_file_name(os.path.basename(fastq))
 
             read = f"read{filename_parse['read']}"
-
             # check if the read is already present in the dictionary
             if read not in sample_meta[sample]:
                 sample_meta[sample][read] = []
 
             sample_meta[sample][read].append(fastq)
-        sample_meta[sample]['sequence'] = int(filename_parse['sequence'])
+     
 
     # test groups
     if not _test_groups_vs_conditions(sample_meta):
         raise Exception(f"Number of groups does not match the number of conditions.")
     whitespace_groups = set(
-        sample['group'] for _,sample in sample_meta.items()
+        sample['group'] for _,sample in sample_meta.items() #if type(sample)==dict and 'group' in sample.keys()
         if re.search(r'\s+', sample['group'])
     )
     if whitespace_groups:
         raise Exception(f"Group names contain spaces: {', '.join(whitespace_groups)}")
-    return {'samples': sample_meta}
+    return sample_meta
+
+def build_metadata(lst_pooled,list_defaults,my_fastq_list,meta_data_file):
+    return {
+        'experiment': buid_experiment_metadata(lst_pooled,list_defaults),
+        'samples': build_sample_metadata(my_fastq_list,meta_data_file),
+    }
 
 
 def parse_fastq_file_name(fastq):
@@ -261,15 +305,17 @@ def save_output_yaml(my_dict_data, output):
 
 
 def main(argv=None):
+    
     """Coordinate argument parsing and program execution."""
     args = parse_args(argv)
+    
     logging.basicConfig(level=args.log_level, format="[%(levelname)s] %(message)s")
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("[%(levelname)s] %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-
+    
     if not os.path.isdir(args.fastq_dir):
 
         logger.error(f"Folder {args.fastq_dir} does not exist!")
@@ -281,18 +327,34 @@ def main(argv=None):
         logger.error(f"Input metadata file {args.metadata} does not exist!")
         raise ValueError(f"Input metadata file {args.metadata} does not exist!")
 
-
+    else:
+        sampl_in=args.metadata
+        pattern = r'\[([A-Za-z\s]*)\]'
+        sections = {}
+        current_section = None
+        
+        with open(sampl_in, newline='\n') as csvfile:
+            smreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+            for row in smreader:
+                if re.match(pattern, row[0]):
+                    current_section = row[0]
+                    sections[current_section] = []
+                else:
+                    sections[current_section].append(row)
+        lst_pooled = sections.get('[Pooled Screen]', [])
+        lst_samples = sections.get('[Samples]', [])
+        sample_df = pd.DataFrame(lst_samples[1:], columns=lst_samples[0])
+        sample_df=sample_df.apply(pd.to_numeric, errors='ignore')
+                
     my_fastq_list = get_fastq_list_from_dir(args.fastq_dir)
 
     # if my_fastq_list is empty, raise value error and exit
     if not my_fastq_list:
         logger.error(f"No fastq files found in the directory {args.fastq_dir}.")
         raise ValueError(f"No fastq files found in the directory {args.fastq_dir}.")
-
-    my_sample_table = build_metadata(
-                        my_fastq_list,
-                        args.metadata
-                    )
+   
+    my_sample_table = build_metadata(lst_pooled,list_defaults,my_fastq_list,sample_df)
+                     
 
     # export the dictionary as yaml
     save_output_yaml(my_sample_table, args.output)

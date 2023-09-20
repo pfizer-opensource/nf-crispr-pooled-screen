@@ -1,0 +1,37 @@
+nextflow_process {
+    process "SAMPLE_META_MODULE_ILLUM"
+    name "Test Process SAMPLE_META_MODULE_ILLUM"
+    tag "sample_meta"
+    tag "illumina_meta"
+   
+    script "modules/local/sample_meta_illumina.nf"
+
+    // Note: test data is not included in public release
+
+    test("Sample Metadata Generation") {
+
+        when {
+            params {
+                fastq_dir = "$baseDir/tests/test-datasets/testdata"
+                metadata  = "$baseDir/tests/test-datasets/input_sample_table/pooled_screen_metadata_v2.csv"
+                prefix    = 'test'
+                outdir    = "$outputDir"
+                metadata_format            = 'illumina'
+            }
+            process {
+                """
+                input[0] = "${params.fastq_dir}"
+                input[1] = "${params.metadata}"
+                input[2] = "${params.prefix}"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.sample_meta_yaml.get(0) ==~ ".*/${params.prefix}.metadata.yaml"
+            assert snapshot(process.out.sample_meta_yaml).match()
+        }
+
+    }
+}

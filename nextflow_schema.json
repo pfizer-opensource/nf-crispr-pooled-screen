@@ -6,7 +6,7 @@
     "type": "object",
     "definitions": {
         "input_output_options": {
-            "title": "Input/output options",
+            "title": "Input and output",
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
@@ -14,15 +14,25 @@
                 "fastq_dir": {
                     "type": "string",
                     "format": "directory-path",
-                    "description": "The input directory containing fastq files. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "title": "FASTQ directory",
+                    "description": "The input directory containing fastq files. Use absolute paths for storage on cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "sample_input_meta_table": {
+                "metadata": {
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.csv",
-                    "description": "Path to sample input metadata table.",
+                    "title": "Upload metadata file",
+                    "description": "Path to metadata input file.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "metadata_format": {
+                    "type": "string",
+                    "default": "illumina",
+                    "enum": ["illumina", "csv"],
+                    "title": "Selet metadata format",
+                    "description": "The format of the metadata file.",
                     "fa_icon": "far fa-file-code"
                 },
                 "library": {
@@ -30,67 +40,137 @@
                     "format": "file-path",
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.txt",
-                    "description": "Path to Library file.",
+                    "title": "Upload guide library file",
+                    "description": "Path to the guide library file.",
                     "fa_icon": "far fa-file-code"
                 },
                 "prefix": {
                     "type": "string",
-                    "description": "Prefix added to the output files.",
+                    "title": "Experiment prefix",
+                    "description": "Prefix added to the output file names.",
                     "fa_icon": "far fa-file-code"
                 },
+                "outdir": {
+                    "type": "string",
+                    "default": "output",
+                    "format": "directory-path",
+                    "title": "Output directory",
+                    "description": "The output directory where the results will be saved.",
+                    "fa_icon": "fas fa-folder-open",
+                    "portal_hidden": true
+                }
+            },
+            "required": ["fastq_dir", "metadata", "library", "prefix"]
+        },
+        "preprocess_qc_options": {
+            "title": "Preprocessing and QC",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Options controlling preprocessing (including guide counting) and quality control analysis",
+            "properties": {
                 "count_program": {
                     "type": "string",
                     "default": "mageck",
-                    "pattern": "^mageck|none$",
-                    "description": "Program used to count reads.",
-                    "fa_icon": "fas fa-question-circle",
-                    "enum": ["mageck", "none"]
+                    "enum": ["mageck"],
+                    "title": "Select guide count program",
+                    "description": "Program to use to count guide reads.",
+                    "fa_icon": "fas fa-question-circle"
+                },
+                "normalization_method": {
+                    "type": "string",
+                    "default": "median",
+                    "title": "Select guide normalization method",
+                    "description": "Method to use for guide count normalization.",
+                    "fa_icon": "far fa-file-code",
+                    "enum": ["none", "median", "total", "control"]
+                },
+                "control_guides": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.txt",
+                    "title": "Upload control guides file",
+                    "description": "Path to file containing control guides for control normalization.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "mageck_count_options": {
+                    "type": "string",
+                    "pattern": "^\\s*(--?\\S+(\\s+[^-]\\S+)?\\s*)+$",
+                    "title": "MAGeCK count additional options",
+                    "description": "Additional options for the mageck count command.",
+                    "fa_icon": "far fa-file-code"
                 },
                 "annotate_dictionary": {
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.yml",
-                    "description": "Path to YAML file defining the data annotation dictionary.",
-                    "fa_icon": "far fa-file-code"
-                },
-                "outdir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths.",
-                    "fa_icon": "fas fa-folder-open"
-                },
-                "bucket": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The s3 bucket directory where the results will be saved. You have to use absolute paths.",
-                    "fa_icon": "fas fa-folder-open"
+                    "title": "Upload gene annotation file",
+                    "description": "Path to YAML file defining the gene annotation dictionary.",
+                    "fa_icon": "far fa-file-code",
+                    "hidden": true
                 }
-            },
-            "required": ["fastq_dir", "library", "sample_input_meta_table"]
+            }
         },
-        "mageck_count_options": {
-            "title" : "MAGeCK Count options",
+        "analysis_options": {
+            "title": "Analysis",
             "type": "object",
             "fa_icon": "fas fa-terminal",
-            "description": "Define MAGeCK Count options.",
+            "description": "Screen analysis options",
             "properties": {
-                "mageck_count_normalization_method": {
-                    "type": "string",
-                    "pattern": "^none|median|total|control$",
-                    "description": "Normalization method to be used as mageck option count command. (--norm-method)",
-                    "fa_icon": "far fa-file-code",
-                    "enum": ["none", "median", "total", "control"]
+                "run_mageck_mle": {
+                    "type": "boolean",
+                    "title": "Perform MAGeCK MLE analysis?",
+                    "description": "Whether to run the MAGeCK MLE analysis.",
+                    "fa_icon": "fas fa-gears"
                 },
-                "mageck_count_options": {
+                "design_matrix": {
                     "type": "string",
-                    "pattern": "^\\s*(--\\S+\\s+\\S+\\s*)+$|^\\s*(-\\S+\\s+\\S+\\s*)+$",
-                    "description": "Additional options to be used as mageck option count command.",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.txt",
+                    "title": "Upload design matrix file",
+                    "description": "Path to the mageck mle design matrix.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "mageck_mle_options": {
+                    "type": "string",
+                    "pattern": "^\\s*(--?\\S+(\\s+[^-]\\S+)?\\s*)+$",
+                    "title": "MAGeCK MLE additional options",
+                    "description": "Additional options for the mageck mle command.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "run_mageck_test": {
+                    "type": "boolean",
+                    "title": "Perform MAGeCK test analysis?",
+                    "description": "Whether to run the MAGeCK test analysis.",
+                    "fa_icon": "fas fa-gears"
+                },
+                "gene_test_threshold": {
+                    "type": "number",
+                    "default": 0.25,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "title": "Gene test threshold",
+                    "description": "Threshold for including guides in the gene test in MAGeCK test",
+                    "fa_icon": "fas fa-sliders"
+                },
+                "gene_lfc_method": {
+                    "type": "string",
+                    "default": "alphamedian",
+                    "enum": ["median", "alphamedian", "mean", "alphamean", "secondbest"],
+                    "title": "Select gene LFC method",
+                    "description": "Method for calculating gene log fold change from guide LFCs in MAGeCK test",
+                    "fa_icon": "fas fa-sliders"
+                },
+                "mageck_test_options": {
+                    "type": "string",
+                    "pattern": "^\\s*(--?\\S+(\\s+[^-]\\S+)?\\s*)+$",
+                    "title": "MAGeCK test additional options",
+                    "description": "Additional options for the mageck test command.",
                     "fa_icon": "far fa-file-code"
                 }
             }
-
-
         },
         "max_job_request_options": {
             "title": "Max job request options",
@@ -110,7 +190,7 @@
                 "max_memory": {
                     "type": "string",
                     "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "128.GB",
+                    "default": "10.GB",
                     "fa_icon": "fas fa-memory",
                     "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
                     "hidden": true,
@@ -119,7 +199,7 @@
                 "max_time": {
                     "type": "string",
                     "description": "Maximum amount of time that can be requested for any single job.",
-                    "default": "240.h",
+                    "default": "4.h",
                     "fa_icon": "far fa-clock",
                     "pattern": "^(\\d+\\.?\\s*(s|m|h|day)\\s*)+$",
                     "hidden": true,
@@ -169,13 +249,6 @@
                     "fa_icon": "fas fa-remove-format",
                     "hidden": true
                 },
-                "tracedir": {
-                    "type": "string",
-                    "description": "Directory to keep pipeline Nextflow logs and reports.",
-                    "default": "${params.outdir}/pipeline_info",
-                    "fa_icon": "fas fa-cogs",
-                    "hidden": true
-                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
@@ -202,6 +275,12 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/preprocess_qc_options"
+        },
+        {
+            "$ref": "#/definitions/analysis_options"
         },
         {
             "$ref": "#/definitions/max_job_request_options"

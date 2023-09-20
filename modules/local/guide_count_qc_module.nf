@@ -5,43 +5,43 @@ process GUIDE_COUNT_QC_MODULE {
     container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
 
     input:
-    tuple val(labels_list), val(count_files_list), path(rep_count_files), path(rep_count_files_yml)
+    tuple val(representation), val(count_file_label), path(count_file), path(samples_yml)
     val prefix
+    path control_guides
     path annotate_dict
 
-
-
     output:
-    path '*rep_correlation_*.tsv', emit: correlationtables
-    path '*normalized_count_*.tsv', emit: normalizedtables
-    path '*data_long_shape_*.tsv', emit: longshapetables
-    path '*.pdf', emit: pdf, optional: true
+    path '*.count_normalized.txt', emit: normalizedtables
+    path '*.guide_data_long.tsv', emit: longshapetables
+    path '*.replicates_cor.tsv', emit: correlationtables
+    path '*.replicates_cor.pdf', emit: pdf, optional: true
     path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
-    // check if annotate_dict is not null and define args
 
     script: // This script is bundled with the pipeline, in nf/pooled_screen/bin/
 
-    def args = annotate_dict ? "--annotate_dict=${annotate_dict}" : ""
+    def args = task.ext.args ?: ''
+    args += control_guides ? " --control_guides=${control_guides}" : ""
+    args += annotate_dict ? " --annotate_dict=${annotate_dict}" : ""
     """
     # Making sure the labels and files match
-    if [[ ! "${rep_count_files_yml}" == *"${labels_list}"* ]]; then
-        echo "ERROR: ${labels_list} doesn't match ${rep_count_files_yml}"
+    if [[ ! "${samples_yml}" == *"${representation}"* ]]; then
+        echo "ERROR: ${representation} doesn't match ${samples_yml}"
         exit 1
     fi
 
-    if [[ ! "${rep_count_files}" == *"${labels_list}"* ]]; then
-        echo "ERROR: ${labels_list} doesn't match ${rep_count_files}"
+    if [[ ! "${count_file}" == *"${representation}"* ]]; then
+        echo "ERROR: ${representation} doesn't match ${count_file}"
         exit 1
     fi
 
     guide_count_QC.py \\
-        --repr_lis=${labels_list} \\
-        --rep_count_files=${rep_count_files} \\
-        --rep_count_files_yml=${rep_count_files_yml} \\
-        --prefix=${prefix} \\
+        --count_file="${count_file}" \\
+        --representation="${representation}" \\
+        --samples_yml="${samples_yml}" \\
+        --prefix="${prefix}." \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

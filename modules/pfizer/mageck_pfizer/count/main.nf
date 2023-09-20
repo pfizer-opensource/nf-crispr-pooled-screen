@@ -24,15 +24,13 @@ process MAGECK_COUNT {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = params.mageck_count_options ?: ''
-    def norm_mode = params.mageck_count_normalization_method ?: "none"
+    def args = task.ext.args ?: ''
     """
     mageck count \\
         --fastq ${fastqlist.join(" ")} \\
         --sample-label '${sample_label.join(",")}' \\
         --list-seq ${library} \\
         --output-prefix '${prefix}' \\
-        --norm-method ${norm_mode} \\
         $args
 
     cp .command.log mageck_count.log

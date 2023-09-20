@@ -1,0 +1,387 @@
+nextflow_process {
+
+    name "Test Process GUIDE_COUNT_QC_MODULE"
+    tag "guide_count_qc"
+    script "modules/local/guide_count_qc_module.nf"
+    process "GUIDE_COUNT_QC_MODULE"
+    profile "+debug"
+
+    // Note: test data is not included in public release
+
+    test("Default Guide Count QC") {
+        tag "qc_defaults"
+
+        when {
+            params {
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.normalizedtables.get(0) ==~ ".*/${params.prefix}.max_3000X.count_normalized.txt"
+            assert process.out.longshapetables.get(0) ==~ ".*/${params.prefix}.max_3000X.guide_data_long.tsv"
+            assert process.out.correlationtables.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.tsv"
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("Median Normalization") {
+        tag "qc_norm_median"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'median'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("Median Normalization - Switch to Total Norm with High Missing Guides") {
+        tag "qc_norm_median_missing_guides"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'median'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_high_missing_guides.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+            assert process.stdout.join("\n").contains("Using total normalization instead")
+        }
+
+    }
+
+    test("Total Normalization") {
+        tag "qc_norm_total"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'total'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("Control Normalization") {
+        tag "qc_norm_control"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'control'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = "$baseDir/tests/test-datasets/control_guides.txt"
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("Control Normalization - Missing Controls File") {
+        tag "qc_norm_control_missing_file"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'control'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for missing control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+            assert process.errorMessage.contains("No control guides found")
+        }
+
+    }
+
+    test("No Normalization") {
+        tag "qc_norm_none"
+        tag "qc_norm"
+        tag "normalization"
+
+        when {
+            params {
+                normalization_method       = 'none'
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("QC with One Replicate") {
+        tag "qc_one_replicate"
+
+        when {
+            params {
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_one_replicate.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_one_replicate.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf == []
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("Detect Inconsistent Representation Error") {
+        tag "qc_representation_error"
+
+        when {
+            params {
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("1000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = []  // Use empty list for unused annotation_dict path input
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+        }
+
+    }
+
+    test("With Annotation Dictionary - Single Group Definition") {
+        tag "qc_annotation_single"
+        tag "qc_annotation"
+
+        when {
+            params {
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = "$baseDir/tests/test-datasets/input_sample_table/annotate_dict.yml"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+    test("With Annotation Dictionary - Multiple Groups Definition") {
+        tag "qc_annotation_multi"
+        tag "qc_annotation"
+
+        when {
+            params {
+                prefix                     = 'test'
+                outdir                     = "$outputDir"
+            }
+            process {
+                """
+                input[0] = tuple("3000",
+                                 "test.count.max_3000X",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
+                                 "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
+                input[1] = "${params.prefix}"
+                input[2] = []  // Use empty list for unused control_guides path input
+                input[3] = "$baseDir/tests/test-datasets/input_sample_table/annotate_dict_multi_definitions.yml"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.pdf.get(0) ==~ ".*/${params.prefix}.max_3000X.replicates_cor.pdf"
+            assert snapshot(
+                process.out.normalizedtables,
+                process.out.longshapetables,
+                process.out.correlationtables,
+            ).match()
+        }
+
+    }
+
+}

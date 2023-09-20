@@ -1,0 +1,128 @@
+{
+    "Control Normalization": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,936bce99f87383e35ee369956a84bcf8"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,9239b1430e8dfce3f28c3b1d465d1b31"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,cda1fe739075d144d08d009f2633acc6"
+            ]
+        ],
+        "timestamp": "2024-04-10T20:53:27.238797"
+    },
+    "With Annotation Dictionary - Multiple Groups Definition": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,8a3c8ea06b7fb89c404565990f102079"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,5c9798fe1e3a1d95ea117ac5145ad169"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+            ]
+        ],
+        "timestamp": "2024-04-11T18:51:55.277228"
+    },
+    "Default Guide Count QC": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,8a27a225dd3ad5171835250b06c61dfe"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,7575692bfb5157b78be6dcb4d73d8df9"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+            ]
+        ],
+        "timestamp": "2024-04-11T18:49:44.902262"
+    },
+    "Median Normalization - Switch to Total Norm with High Missing Guides": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,857c073caffd22ef9e7646225816c5a2"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,9c05fb11f2fac097145d4b5d105f826d"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,df55a0d42a9e1e96a2756702f6925adf"
+            ]
+        ],
+        "timestamp": "2024-04-10T20:52:58.429134"
+    },
+    "Total Normalization": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,0e52af88beb8282ee6a2faf78d050c91"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,2892f99beb1c54a129bd4ec2023db41d"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,63cee4005cc1eea0d1029c2976d5f3d5"
+            ]
+        ],
+        "timestamp": "2024-04-10T20:53:12.834968"
+    },
+    "No Normalization": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,278ce1a3d378d7ddd17737cfa0168179"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,3f41be8f277a546587fea97067471dc6"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,e197ed937a5b1b3fa222668ad5bb8510"
+            ]
+        ],
+        "timestamp": "2024-02-10T20:53:56.164177"
+    },
+    "QC with One Replicate": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,4a2fae09aa1aa8af9bcea843d49278e6"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,f2d13df7527d644ae67562c0a2b8bd81"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,5ec99e39d39393540c59b0ec3ad60f63"
+            ]
+        ],
+        "timestamp": "2024-04-11T18:51:16.621425"
+    },
+    "Median Normalization": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,8a27a225dd3ad5171835250b06c61dfe"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,7575692bfb5157b78be6dcb4d73d8df9"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+            ]
+        ],
+        "timestamp": "2024-04-10T20:52:44.015942"
+    },
+    "With Annotation Dictionary - Single Group Definition": {
+        "content": [
+            [
+                "test.max_3000X.count_normalized.txt:md5,bdb38dccd6ca6c726cc0d43b7ac4dae5"
+            ],
+            [
+                "test.max_3000X.guide_data_long.tsv:md5,28355f1f5afedffc408ecdd8d064ea6e"
+            ],
+            [
+                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+            ]
+        ],
+        "timestamp": "2024-04-11T18:51:40.670621"
+    }
+}

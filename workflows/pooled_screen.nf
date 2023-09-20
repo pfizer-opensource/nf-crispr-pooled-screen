@@ -9,7 +9,6 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Check input path parameters to see if they exist
 
 // Check mandatory parameters
-def checkPathParamList = [ params.fastq_dir, params.outdir, params.sample_input_meta_table, params.library ]
 if (params.fastq_dir) {
     try {
         ch_input = file(params.fastq_dir, checkIfExists: true)
@@ -30,9 +29,9 @@ if (params.fastq_dir) {
     exit 1, 'Input fastq_dir not specified!'
 }
 
-if (params.sample_input_meta_table) {
+if (params.metadata) {
     try {
-        ch_sample_input_meta_table = file(params.sample_input_meta_table, checkIfExists: true)
+        ch_metadata = file(params.metadata, checkIfExists: true)
     } catch (java.nio.file.NoSuchFileException e) {
         // return the error message if the path does not exist
         exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
@@ -41,11 +40,17 @@ if (params.sample_input_meta_table) {
         exit 1, "The file " + e.getMessage() + " cannot be accessed!"
     } catch (e) {
         // return everything else
-        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+        exit 1, "The metadata file definition failed with following reason " + e
     }
 } else {
-    exit 1, 'Input sample_input_meta_table not specified!'
+    exit 1, 'Metadata parameter not specified!'
 }
+if (params.metadata_format) {
+    ch_table_format = params.metadata_format
+} else {
+    exit 1, 'Metadata format not specified!'
+}
+
 if (params.library) {
     try {
         ch_library = file(params.library, checkIfExists: true)
@@ -57,12 +62,36 @@ if (params.library) {
         exit 1, "The file " + e.getMessage() + " cannot be accessed!"
     } catch (e) {
         // return everything else
-        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+        exit 1, "The library file definition failed with following reason " + e
     }
 } else {
-    exit 1, 'Input library not specified!'
+    exit 1, 'Library parameter not specified!'
 }
-if (params.prefix) { ch_prefix = params.prefix }
+
+if (params.prefix) { 
+    ch_prefix = params.prefix
+} else {
+    exit 1, 'Prefix parameter not specified!'
+}
+
+if (params.control_guides) {
+    try {
+        ch_control_guides = file(params.control_guides, checkIfExists: true)
+    } catch (java.nio.file.NoSuchFileException e) {
+        // return the error message if the path does not exist
+        exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
+    } catch (java.nio.file.AccessDeniedException e) {
+        // return the error message if the path cannot be accessed
+        exit 1, "The file " + e.getMessage() + " cannot be accessed!"
+    } catch (e) {
+        // return everything else
+        exit 1, "The file definition failed with following reason " + e
+    }
+} else {
+    // Since the control_guides file is optional, if it is not provided, then need to
+    // define the channel as [] to avoid errors when it is passed as a module input
+    ch_control_guides = []
+}
 
 // Since annotate_dictionary is optional, one needs to define as [] to avoid
 // the absence of the channel ch_annotate_dict
@@ -77,12 +106,38 @@ if (params.annotate_dictionary) {
         exit 1, "The file " + e.getMessage() + " cannot be accessed!"
     } catch (e) {
         // return everything else
-        exit 1, "The sample_input_meta_table file definition failed with following reason " + e
+        exit 1, "The annotate dictionary file definition failed with following reason " + e
     }
 } else {
     ch_annotate_dict = []
 }
 
+if (params.run_mageck_mle) {
+    if (params.design_matrix) {
+        try {
+            ch_design_matrix = Channel
+                .fromList( params.design_matrix.split(',') as List )
+                .map {
+                    def parts = it.split(':', 2)
+                    if (parts.size() == 1) {
+                        [ prefix: '', file: file(parts[0], checkIfExists: true) ]
+                    } else {
+                        [ prefix: parts[0], file: file(parts[1], checkIfExists: true) ]
+                    }
+                }
+        } catch (java.nio.file.NoSuchFileException e) {
+            exit 1, "The file " + e.getMessage() + " does not exist or cannot be accessed!"
+        } catch (java.nio.file.AccessDeniedException e) {
+            exit 1, "The file " + e.getMessage() + " cannot be accessed!"
+        } catch (e) {
+            exit 1, "failed with following reason " + e
+        }
+    } else {
+        exit 1, 'Design matrix required to run MAGeCK MLE!'
+    }
+} else {
+    ch_design_matrix = null
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,6 +154,7 @@ include { GUIDE_COUNTS_REP } from '../subworkflows/local/guide_counts_rep_subwor
     IMPORT MODULES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { SAMPLE_META_MODULE_ILLUM } from '../modules/local/sample_meta_illumina.nf'
 include { SAMPLE_META_MODULE } from '../modules/local/sample_meta_module.nf'
 include { MAGECK_REPORT_HTML } from '../modules/local/guide_generate_mageck_report'
 include { GUIDE_CORR_REP_TOTAL } from '../modules/local/guide_correlation_total_table.nf'
@@ -109,6 +165,8 @@ include { GUIDE_COUNT_QC_MODULE } from '../modules/local/guide_count_qc_module.n
 //
 include { MAGECK_COUNT 	      	      } from '../modules/pfizer/mageck_pfizer/count/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { MAGECK_MLE } from '../modules/nf-core/mageck/mle/main'
+include { MAGECK_TEST                 } from '../modules/nf-core/mageck/test/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -117,14 +175,25 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 workflow POOLED_SCREEN {
 
     ch_versions = Channel.empty()
-
-    SAMPLE_META_MODULE (
-        ch_input,
-        ch_sample_input_meta_table,
-        ch_prefix
-    )
+    def META_MOD_OUT_YAML
+    def META_MOD_OUT_VERSIONS
+    if (ch_table_format == 'illumina') {
+        SAMPLE_META_MODULE_ILLUM(ch_input,
+            ch_metadata,
+            ch_prefix)
+        META_MOD_OUT_YAML = SAMPLE_META_MODULE_ILLUM.out.sample_meta_yaml
+        META_MOD_OUT_VERSIONS = SAMPLE_META_MODULE_ILLUM.out.versions
+    } else {
+        // if it is not illumina, it is assumed to be csv cause it would have broken earlier if nothing is specified
+        SAMPLE_META_MODULE(ch_input,
+            ch_metadata,
+            ch_prefix)
+        META_MOD_OUT_YAML = SAMPLE_META_MODULE.out.sample_meta_yaml
+        META_MOD_OUT_VERSIONS = SAMPLE_META_MODULE.out.versions
+  
+    }
     // check if SAMPLE_META.out.sample_meta_yaml has multiple read entries
-    SAMPLE_META_MODULE.out.sample_meta_yaml
+    META_MOD_OUT_YAML
         .map { PooledUtils.multipleRead(it) }
         .set { multi_read }
 
@@ -134,18 +203,20 @@ workflow POOLED_SCREEN {
 
     if (params.count_program == 'mageck') {
         // store labels and fastqfiles in channels from PooledUtils.get_labels_fastq_list
-
-        SAMPLE_META_MODULE.out.sample_meta_yaml
+        META_MOD_OUT_YAML
             .map { PooledUtils.getSampleLabelFastqMapForMageck(it) }
             .multiMap{ it ->
                 labels: it[0]
                 fastq_list: it[1]
+                grp: it[2]
+                is_ref: it[3]
+                
             }
             .set { result }
         labels = result.labels
         fastq_list = result.fastq_list
 
-        ch_versions = ch_versions.mix(SAMPLE_META_MODULE.out.versions)
+        ch_versions = ch_versions.mix(META_MOD_OUT_VERSIONS)
         // TODO: make sure the multiple read_* is comma separated when building the fastq file input arg
         MAGECK_COUNT (
             ch_input,
@@ -165,22 +236,36 @@ workflow POOLED_SCREEN {
 
         GUIDE_COUNTS_REP (
             MAGECK_COUNT.out.count,
-            SAMPLE_META_MODULE.out.sample_meta_yaml,
+            META_MOD_OUT_YAML,
             ch_prefix
         )
         ch_versions = ch_versions.mix(GUIDE_COUNTS_REP.out.versions)
     }
-
     // Ensure the same order of labels, file names and file paths
     // while creating a list of channels to execute the analysis in parallel
-
-    my_inputs = GUIDE_COUNTS_REP.out.label_list
+    count_tables = GUIDE_COUNTS_REP.out.label_list
                 .flatten()
-                .merge(GUIDE_COUNTS_REP.out.label_files.flatten()
+                .merge(GUIDE_COUNTS_REP.out.label_files.flatten())
                 .merge(GUIDE_COUNTS_REP.out.rep_count_files.flatten())
-                .merge(GUIDE_COUNTS_REP.out.rep_count_files_yml.flatten()))
+                .merge(GUIDE_COUNTS_REP.out.rep_count_files_yml.flatten())
 
-    GUIDE_COUNT_QC_MODULE (my_inputs, ch_prefix, ch_annotate_dict)
+    if (ch_design_matrix){
+        // Note: The non-normalized count files are used as input for MLE, and the
+        // normalization will be done within MLE based on the value of the normalization_method
+        // parameter (modules.config is used to pass the parameter to the MAGECK_MLE process)
+        mle_inputs = count_tables
+                .combine(ch_design_matrix)
+                .multiMap { label, _, count_file, count_yaml, design_matrix ->
+                    def prefix = ch_prefix
+                    prefix += (design_matrix.prefix ? ".${design_matrix.prefix}" : '')
+                    prefix += (label ? ".${label}X" : '')
+                    sample: [[id: prefix, representation: label], count_file]
+                    design_matrix: design_matrix.file
+                }
+        MAGECK_MLE(mle_inputs.sample, mle_inputs.design_matrix)
+    }
+
+    GUIDE_COUNT_QC_MODULE (count_tables, ch_prefix, ch_control_guides, ch_annotate_dict)
     ch_versions = ch_versions.mix(GUIDE_COUNT_QC_MODULE.out.versions)
 
     // merging the *correlation_representation* into one file using collectFile
@@ -191,6 +276,57 @@ workflow POOLED_SCREEN {
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
+    if (params.run_mageck_test) {
+        def mageck_test_inputs = []
+        // Note: The non-normalized count files are used as input for MAGeCK test, and the
+        // normalization will be done within MAGeCK test based on the value of the normalization_method
+        // parameter (modules.config is used to pass the parameter to the MAGECK_TEST process)
+        // TODO: Checks whether there are contrasts to run should be moved to metadata processing
+        if (ch_table_format == 'illumina') {
+            mageck_test_inputs = count_tables.map{label, _, count_file, count_yaml ->
+                argMap = PooledUtils.createMageckTestArgumentListIllumina(count_yaml)
+                if (! argMap) {
+                    exit 1, 'At least one contrast required to run MAGeCK test!'
+                }
+                metaList = [];
+                for(args : argMap){
+                    metaList.add([
+                        shouldRun: args.run_mageck_test,
+                        contrast: args.contrast_prefix,
+                        reference : args.c.join(","),
+                        treatment : args.t.join(","),
+                        representation: label,
+                        prefix : "${ch_prefix}.${args.group}.vs.${args.controlGroup}.${label}X",
+                        count_table : count_file
+                    ])
+                }
+                metaList
+            }
+        } else {
+            // if it is not illumina, it is assumed to be csv cause it would have broken earlier if nothing is specified
+            mageck_test_inputs = count_tables.map{label, _, count_file, count_yaml ->
+                argMap = PooledUtils.createMageckTestArgumentMap(count_yaml)
+                if (! argMap.run_mageck_test) {
+                    exit 1, 'At least one contrast required to run MAGeCK test!'
+                }
+                metaList = [];
+                i=0;
+                for(tArg : argMap.t){
+                    metaList.add([
+                        shouldRun: argMap.run_mageck_test,
+                        contrast: '',
+                        reference : argMap.c,
+                        treatment : tArg.join(","),
+                        representation: label,
+                        prefix : "${ch_prefix}.${argMap.group[i++]}.vs.${argMap.controlGroup}.${label}X",
+                        count_table : count_file
+                    ])
+                }
+                metaList
+            }
+        }
+        MAGECK_TEST(mageck_test_inputs.flatten())
+    }
 }
 
 /*

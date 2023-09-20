@@ -1,4 +1,4 @@
-process SAMPLE_META_MODULE {
+process SAMPLE_META_MODULE_ILLUM {
     tag "GenerateSampleMeta"
     label 'process_low'
 
@@ -15,7 +15,7 @@ process SAMPLE_META_MODULE {
 
     script: // This script is bundled with the pipeline, in nf/pooled_screen/bin/
     """
-    sample_meta_generation.py \\
+    illum_meta_generation.py \\
         --fastq_dir="${fastq_dir}" \\
         --metadata="${metadata}" \\
         --output="${prefix}.metadata.yaml"

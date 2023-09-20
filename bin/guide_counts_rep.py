@@ -104,14 +104,13 @@ class Count:
                 except yaml.YAMLError as exc:
                     print(f"Failed to parse yaml file {load_csv} with error",exc)
                     raise
-
-            self.meta_data=sample_meta_info
+            if 'samples' in sample_meta_info.keys():
+                self.meta_data=sample_meta_info['samples']
+            else:
+                self.meta_data=sample_meta_info
 
         else:
             logger.error(f"The {count_file} is not a CSV file.")
-
-        # self.sub_samples={}
-        # self.build_sub_sample_dict()
 
     def _load_csv(self,csv_file:str,delimiter:str) -> None:
         """
@@ -175,19 +174,16 @@ class Count:
             regexp_list = [f'^{sample}$' for sample in select_samples ]
             # Get the columns that match the regex
             selected_columns = self.table_count.filter(regex='|'.join(regexp_list)).columns
-            # print(selected_columns)
             table_pcr_subset = self.table_count.loc[:,selected_columns]
 
             # select select_samples keys from self.meta_data
             sub_samples = {key: self.meta_data[key] for key in select_samples}
 
             # # group dictionary based on the values of the conditions
-            # group_keys = tuple(sub_samples.values())[0]['conditions'].keys()
 
             group_dict = {}
             # group the dictionary based on the conditions for each bio replicate
             for key,value in sub_samples.items():
-                # group_values = (tuple(value.get('conditions').values()),value.get('replicate'))
                 group_values = value.get('group_rep')
                 if group_values in group_dict.keys():
                     group_dict[group_values].append(key)
@@ -223,7 +219,6 @@ class Count:
                 pcr_list = list(set([sub_samples[sample]['aliquot'] for sample in sample_names]))
                 pcr_rep_val=sum([sub_samples[sample]['representation'] for sample in sample_names])
                 pcr_list.sort()
-
                 tmp_dict[col_name] = {
                     'samples':sample_list,
                     'aliquot': pcr_list,
@@ -231,9 +226,12 @@ class Count:
                     'conditions':sub_samples[sample_names[0]]['conditions'],
                     'group':self.meta_data[sample_names[0]]['group'],
                     'group_rep': group_rep,
-                    'sample_rep_val': pcr_rep_val
-                }
-                # representation is the max betweem pcr_rep_val and the current representation
+                    'sample_rep_val': pcr_rep_val,
+                    }
+                if 'reference' in self.meta_data[sample_names[0]].keys():
+                    tmp_dict[col_name]['reference'] = self.meta_data[sample_names[0]]['reference']
+                else:
+                    tmp_dict[col_name]['is_ref'] = self.meta_data[sample_names[0]].get('is_ref', 0)
                 representation = max(pcr_rep_val,representation)
             sample_meta_dict[representation] = tmp_dict
             df_dict[representation] = df
@@ -300,13 +298,13 @@ def main(argv=None):
 
     output_map_file = {}
     for representation,pd_frame in combined_count_dict.items():
-        file_name = f"{args.prefix}max_{representation}.count.txt"
+        file_name = f"{args.prefix}max_{representation}X.count.txt"
         save_pandas_to_csv(
             pd_frame,
             file_name,
             delimiter='\t'
             )
-        yml = f"{args.prefix}max_{representation}.count.yml"
+        yml = f"{args.prefix}max_{representation}X.count.yml"
         export_output_file_map(meta_data[representation],yml)
         # Store the map representation:file_name basename to be used to export
         # the output_file needed downstream
