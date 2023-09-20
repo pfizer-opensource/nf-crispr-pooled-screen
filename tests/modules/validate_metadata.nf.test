@@ -1,0 +1,331 @@
+def testDataDir = "tests/test-datasets"  // Note: test data is not included in public release
+
+nextflow_process {
+    process "VALIDATE_METADATA"
+    name "Test Process VALIDATE_METADATA"
+
+    tag "metadata"
+    tag "validate_metadata"
+
+    script "modules/local/validate_metadata.nf"
+
+    test("Metadata Validation from Illumina Sample Sheet") {
+        tag "validate_metadata_illumina"
+
+        setup {
+            run("PARSE_METADATA_ILLUMINA") {
+                script "modules/local/parse_metadata_illumina.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.meta_yaml.get(0) ==~ ".*/${params.prefix}.metadata.yaml"
+            assert snapshot(process.out.meta_yaml).match()
+        }
+    }
+
+    test("Metadata Validation from CSV") {
+        tag "validate_metadata_csv"
+
+        setup {
+            run("PARSE_METADATA_CSV") {
+                script "modules/local/parse_metadata_csv.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_csv_table.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.meta_yaml.get(0) ==~ ".*/${params.prefix}.metadata.yaml"
+            assert snapshot(process.out.meta_yaml).match()
+        }
+    }
+
+    test("No Group Definition") {
+        tag "validate_metadata_no_group_illumina"
+
+        setup {
+            run("PARSE_METADATA_ILLUMINA") {
+                script "modules/local/parse_metadata_illumina.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_no_groups.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.meta_yaml.get(0) ==~ ".*/${params.prefix}.metadata.yaml"
+            assert snapshot(process.out.meta_yaml).match()
+        }
+    }
+
+    test("Groups vs Conditions Error: One set of conditions in multiple groups") {
+        tag "validate_metadata_group_error"
+        tag "validate_metadata_group-vs-conditions_1_illumina"
+
+        setup {
+            run("PARSE_METADATA_ILLUMINA") {
+                script "modules/local/parse_metadata_illumina.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_group_conditions_error_1.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+            assert process.errorMessage.contains("Number of groups does not match the number of conditions")
+        }
+    }
+
+    test("Groups vs Conditions Error: One group contains multiple conditions") {
+        tag "validate_metadata_group_error"
+        tag "validate_metadata_group-vs-conditions_2_illumina"
+
+        setup {
+            run("PARSE_METADATA_ILLUMINA") {
+                script "modules/local/parse_metadata_illumina.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_group_conditions_error_2.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+            assert process.errorMessage.contains("Number of groups does not match the number of conditions")
+        }
+    }
+
+    test("Group Whitespace Error") {
+        tag "validate_metadata_group_error"
+        tag "validate_metadata_group_whitespace_illumina"
+
+        setup {
+            run("PARSE_METADATA_ILLUMINA") {
+                script "modules/local/parse_metadata_illumina.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_group_spaces_error.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+            assert process.errorMessage.contains("contains spaces")
+        }
+    }
+
+    test("Group Interpolation Spaces Error") {
+        tag "validate_metadata_group_error"
+        tag "validate_metadata_group_whitespace_interpolation_csv"
+
+        setup {
+            run("PARSE_METADATA_CSV") {
+                script "modules/local/parse_metadata_csv.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_csv_table_templated_groups_interpolated_spaces_error.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.exitStatus != 0
+            assert process.errorMessage.contains("contains spaces")
+        }
+    }
+
+    test("Templated Group Definition") {
+        tag "validate_metadata_templated_group_csv"
+
+        setup {
+            run("PARSE_METADATA_CSV") {
+                script "modules/local/parse_metadata_csv.nf"
+
+                process {
+                    """
+                    input[0] = params.metadata
+                    input[1] = params.prefix
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                metadata  = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_csv_table_templated_groups.csv"
+                fastq_dir = "${baseDir}/${testDataDir}/testdata"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[1] = params.fastq_dir
+                input[2] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.meta_yaml.get(0) ==~ ".*/${params.prefix}.metadata.yaml"
+            assert snapshot(process.out.meta_yaml).match()
+        }
+    }
+}

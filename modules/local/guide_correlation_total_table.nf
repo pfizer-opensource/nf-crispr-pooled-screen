@@ -2,14 +2,14 @@ process GUIDE_CORR_REP_TOTAL {
     tag "GuideCountsCorrTable"
     label 'process_low'
 
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
+    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
 
     input:
     path (correlation_representation)
     val prefix
 
     output:
-    path '*correlation_representation_all.tsv', emit: report
+    path '*.replicates_cor.tsv', emit: report
     path "versions.yml", emit: versions
 
     when:
@@ -20,8 +20,8 @@ process GUIDE_CORR_REP_TOTAL {
     def correlation_file_list = correlation_representation.join(",")
     """
     guide_count_correlation_representation_total.py \\
-        --correlation_file_list \"${correlation_file_list}\" \\
-        --out_file \"${prefix}correlation_representation_all.tsv\"
+        --correlation_file_list "${correlation_file_list}" \\
+        --out_file "${prefix}.replicates_cor.tsv"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

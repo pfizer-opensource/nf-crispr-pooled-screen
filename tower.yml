@@ -1,0 +1,20 @@
+reports:
+  "*count.txt":
+    display: "Guide Count Table"
+    mimeType: "text/tsv"
+  "*count_normalized.txt":
+    display: "Normalized Guide Count Table"
+    mimeType: "text/tsv"
+  "*mageck_count_report.nb.html":
+    display: "Guide Count QC Report"
+  "*replicates_cor.tsv":
+    display: "Replicates Correlation Table"
+    mimeType: "text/tsv"
+  "*replicates_cor.pdf":
+    display: "Replicates Correlation Plots"
+  "*sgrna_summary.txt":
+    display: "Guide Analysis"
+    mimeType: "text/tsv"
+  "*gene_summary.txt":
+    display: "Gene Analysis"
+    mimeType: "text/tsv"

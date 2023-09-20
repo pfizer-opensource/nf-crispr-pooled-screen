@@ -46,11 +46,8 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ## Credits
 
-pfizer-opensource/nf-crispr-pooled-screen was originally written by jribeiro.
-
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+pfizer-opensource/nf-crispr-pooled-screen was written by Joao Ribeiro, Jason Arroyo,
+Daniel Katzel, and Christopher Harrison.
 
 ## Contributions and Support
 

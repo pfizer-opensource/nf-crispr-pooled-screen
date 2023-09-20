@@ -2,7 +2,7 @@ process MAGECK_REPORT_HTML {
     tag "MageckReport"
     label 'process_low'
 
-    container "artifacts.example.com/nextflow/mageck_report_html:0.0.3"
+    container "artifacts.example.com/functional-genomics/mageck_report_html:latest"
 
     input:
     path report_rmd_file
@@ -23,7 +23,7 @@ process MAGECK_REPORT_HTML {
     Rscript -e "library(ggplot2);\\
                 library(tidyr);\\
                 rmarkdown::render(\\"\${report}\\",
-                    output_file=\\"${prefix}mageck_report.html\\",
+                    output_file=\\"${prefix}.mageck_count_report.nb.html\\",
                     output_dir=getwd(),
                     quiet=TRUE)"
 

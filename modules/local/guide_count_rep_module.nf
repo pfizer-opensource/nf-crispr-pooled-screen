@@ -2,7 +2,7 @@ process GUIDE_COUNT_REP_MODULE {
     tag "CountRepresentations"
     label 'process_low'
 
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
+    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
 
     input:
     path count_file
@@ -11,7 +11,7 @@ process GUIDE_COUNT_REP_MODULE {
 
     output:
     stdout emit: console_output
-    path '*output_file_map.yml', emit: out_file_map
+    path '*.output_file_map.yml', emit: out_file_map
     path "*.count.txt", emit: rep_count_files
     path "*.count.yml", emit: rep_count_files_yml
     path "versions.yml", emit: versions
@@ -24,8 +24,8 @@ process GUIDE_COUNT_REP_MODULE {
     guide_counts_rep.py \\
         --count_file="${count_file}" \\
         --sample_meta_yaml="${sample_meta_yaml}" \\
-        --prefix="${prefix}"\\
-        --output_file_map="${prefix}output_file_map.yml"
+        --prefix="${prefix}." \\
+        --output_file_map="${prefix}.output_file_map.yml"
 
 
     cat <<-END_VERSIONS > versions.yml

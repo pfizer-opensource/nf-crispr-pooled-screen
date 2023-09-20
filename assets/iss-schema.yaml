@@ -1,0 +1,40 @@
+samples:
+  section:
+    name: Samples
+    aliases:
+      - Data
+
+  type: tabular
+
+  required:
+    - aliquot
+    - condition
+    - group
+    - replicate
+    - representation
+    - sample
+
+  optional:
+    - reference
+
+experiment:
+  section: Pooled Screen
+  type: key-value
+
+  required:
+    - experiment_name
+    - experiment_date
+    - user
+
+  optional:
+    - name: point_of_contact
+      aliases:
+        - points_of_contact
+
+    - biology_poc
+    - analysis_poc
+    - other_poc
+    - project_name
+    - project_code
+    - department
+    - guide_library

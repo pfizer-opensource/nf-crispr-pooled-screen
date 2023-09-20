@@ -2,7 +2,11 @@ process MAGECK_COUNT {
     tag "MageckCount"
     label 'process_low'
 
+<<<<<<< HEAD
     container "artifacts.example.com/nextflow/mageck:0.5.9.4"
+=======
+    container "artifacts.example.com/functional-genomics/mageck_pfizer:latest"
+>>>>>>> 05f7497 (Release v1.0)
 
     input:
     path fastqfolder
@@ -24,15 +28,13 @@ process MAGECK_COUNT {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = params.mageck_count_options ?: ''
-    def norm_mode = params.mageck_count_normalization_method ?: "none"
+    def args = task.ext.args ?: ''
     """
     mageck count \\
         --fastq ${fastqlist.join(" ")} \\
         --sample-label '${sample_label.join(",")}' \\
         --list-seq ${library} \\
         --output-prefix '${prefix}' \\
-        --norm-method ${norm_mode} \\
         $args
 
     cp .command.log mageck_count.log
