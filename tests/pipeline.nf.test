@@ -1,0 +1,724 @@
+def testDataDir = "tests/test-datasets"  // Note: test data is not included in public release
+
+nextflow_pipeline {
+
+    name "Test Pipeline"
+    tag "pipeline"
+    script "main.nf"
+
+    test("Pipeline Defaults without Analysis") {
+        tag "pipeline_defaults_only"
+        tag "pipeline_defaults"
+        tag "minimal"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert no output for MLE or MAGeCK test
+                { assert ! path("${outputDir}/analysis_1000X/mageck_mle/").exists() },
+                { assert ! path("${outputDir}/analysis_1000X/mageck_test.samples_vs_D0/").exists() },
+            )
+        }
+    }
+
+    test("Pipeline Defaults with MLE and Mageck Test Analysis") {
+        tag "pipeline_defaults_mle_mageck_test"
+        tag "pipeline_defaults"
+        tag "mle"
+        tag "mageck_test"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                run_mageck_mle             = true
+                run_mageck_test            = true
+
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+
+                    // Include the paths for the MAGeCK test output files to ensure that
+                    // all of the correct pairwise combinations were run
+                    *OutputFiles.mageckTest(
+                        "test",
+                        [samples_vs_D0: ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D0_untreated', 'D14_untreated.vs.D0_untreated']],
+                        [1000, 2000, 3000],
+                        ['sgrna_summary.txt', 'gene_summary.txt']
+                    ).collect{ path("${outputDir}/${it}") },
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert MAGeCK MLE created the right output files
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.sgrna_summary.txt").exists() },
+            )
+        }
+    }
+
+    test("Analysis Disabled but Inputs Provided") {
+        tag "analysis_disabled"
+        tag "analysis_booleans"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = false
+                run_mageck_test            = false
+
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert no output for MLE or MAGeCK test
+                { assert ! path("${outputDir}/analysis_1000X/mageck_mle/").exists() },
+                { assert ! path("${outputDir}/analysis_1000X/mageck_test.samples_vs_D0/").exists() },
+            )
+        }
+    }
+
+    test("Detect Error for MLE Analysis Enabled but Inputs Missing") {
+        tag "mle_enabled_missing"
+        tag "analysis_booleans"
+        tag "pipeline_errors"
+        tag "mle"
+        tag "mle_errors"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = true
+                run_mageck_test            = false
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("Design matrix required to run MAGeCK MLE!") },
+            )
+        }
+    }
+
+    test("Detect Error for MAGeCK Test Analysis Enabled but Inputs Missing") {
+        tag "test_enabled_missing"
+        tag "analysis_booleans"
+        tag "pipeline_errors"
+        tag "mageck_test"
+        tag "mageck_test_errors"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_no_analyses.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = false
+                run_mageck_test            = true
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("At least one contrast required to run MAGeCK test!") },
+            )
+        }
+    }
+
+    test("Full Pipeline with Multiple Analyses, Annotations, Non-Default Parameters") {
+        tag "full_pipeline_multi_analyses_annotation_non_default"
+        tag "full_pipeline"
+        tag "mle"
+        tag "mageck_test"
+        tag "multi_analyses"
+        tag "annotation"
+        tag "minimal"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_multi_analyses.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = true
+                run_mageck_test            = true
+
+                count_program              = "mageck"
+                normalization_method       = "control"
+                control_guides             = "${baseDir}/${testDataDir}/control_guides.txt"
+                annotate_dictionary        = "${baseDir}/${testDataDir}/input_sample_table/annotate_dict.yml"
+                mageck_count_options       = "--trim-5 '22,23,24,25,26,28,29,30'"
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition.txt,time_vs_treatment:${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-time_vs_treatment.txt,day_14:${baseDir}/${testDataDir}/design_matrix/design_matrix-day14_untreated_baseline-by_condition.txt"
+                mageck_mle_options         = "--update-efficiency"
+                gene_test_threshold        = 0.3
+                gene_lfc_method            = "median"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+
+                    // Include the paths for the MAGeCK test output files to ensure that
+                    // all of the correct pairwise combinations were run
+                    *OutputFiles.mageckTest(
+                        "test",
+                        [ '': ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D0_untreated', 'D14_untreated.vs.D0_untreated'],
+                          drug_vs_untreated: ['D14_drug.vs.D14_untreated', 'D28_drug.vs.D28_untreated'],
+                          tiered_groups: ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D14_untreated', 'D14_untreated.vs.D0_untreated', 'D28_drug.vs.D28_untreated', 'D28_untreated.vs.D0_untreated'],
+                        ],
+                        [1000, 2000, 3000],
+                        ['sgrna_summary.txt', 'gene_summary.txt']
+                    ).collect{ path("${outputDir}/${it}") },
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert MAGeCK MLE created the right output files
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.time_vs_treatment.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.time_vs_treatment.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.time_vs_treatment.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.time_vs_treatment.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.time_vs_treatment.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.time_vs_treatment.3000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.day_14.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.day_14.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.day_14.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.day_14.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.day_14.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.day_14.3000X.sgrna_summary.txt").exists() },
+            )
+        }
+    }
+
+    test("Full Pipeline with MLE Only, Explicit Parameters") {
+        tag "full_pipeline_mle_only"
+        tag "full_pipeline"
+        tag "mle"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = true
+                run_mageck_test            = false
+
+                count_program              = "mageck"
+                normalization_method       = "median"
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert MAGeCK MLE created the right output files
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.sgrna_summary.txt").exists() },
+
+                // Assert no output for MAGeCK test
+                { assert ! path("${outputDir}/analysis_1000X/mageck_test.samples_vs_D0/").exists() },
+            )
+        }
+    }
+
+    test("Full Pipeline with Mageck Test Only, Explicit Parameters") {
+        tag "full_pipeline_mageck_test_only"
+        tag "full_pipeline"
+        tag "mageck_test"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = false
+                run_mageck_test            = true
+
+                count_program              = "mageck"
+                normalization_method       = "median"
+                gene_test_threshold        = 0.25
+                gene_lfc_method            = "alphamedian"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+
+                    // Include the paths for the MAGeCK test output files to ensure that
+                    // all of the correct pairwise combinations were run
+                    *OutputFiles.mageckTest(
+                        "test",
+                        [samples_vs_D0: ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D0_untreated', 'D14_untreated.vs.D0_untreated']],
+                        [1000, 2000, 3000],
+                        ['sgrna_summary.txt', 'gene_summary.txt']
+                    ).collect{ path("${outputDir}/${it}") },
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert no output for MLE
+                { assert ! path("${outputDir}/mageck_mle/").exists() },
+            )
+        }
+    }
+
+    test("Full Pipeline with One Replicate") {
+        tag "one_replicate"
+        tag "full_pipeline"
+        tag "mle"
+        tag "mageck_test"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_one_replicate.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = true
+                run_mageck_test            = true
+
+                count_program              = "mageck"
+                normalization_method       = "median"
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition_one_replicate.txt"
+                gene_test_threshold        = 0.3
+                gene_lfc_method            = "median"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+
+                    // Include the paths for the MAGeCK test output files to ensure that
+                    // all of the correct pairwise combinations were run
+                    *OutputFiles.mageckTest(
+                        "test",
+                        [samples_vs_D0: ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D0_untreated', 'D14_untreated.vs.D0_untreated']],
+                        [1000, 2000, 3000],
+                        ['sgrna_summary.txt', 'gene_summary.txt']
+                    ).collect{ path("${outputDir}/${it}") },
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+
+                // Assert that correlation plots are missing
+                { assert ! path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert ! path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert ! path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert MAGeCK MLE created the right output files
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.sgrna_summary.txt").exists() },
+            )
+        }
+    }
+
+    test("Full Pipeline with Original CSV Table Metadata Format") {
+        tag "csv_table_metadata"
+        tag "full_pipeline"
+        tag "mle"
+        tag "mageck_test"
+
+        when {
+            params {
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_csv_table.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "csv"
+
+                run_mageck_mle             = true
+                run_mageck_test            = true
+
+                count_program              = "mageck"
+                normalization_method       = "median"
+                design_matrix              = "${baseDir}/${testDataDir}/design_matrix/design_matrix-day0_baseline-by_condition.txt"
+                gene_test_threshold        = 0.3
+                gene_lfc_method            = "median"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+
+                    // Include the paths for the MAGeCK test output files to ensure that
+                    // all of the correct pairwise combinations were run
+                    *OutputFiles.mageckTest(
+                        "test",
+                        ['': ['D-10_untreated.vs.D0_untreated', 'D14_drug.vs.D0_untreated', 'D14_untreated.vs.D0_untreated']],
+                        [1000, 2000, 3000],
+                        ['sgrna_summary.txt', 'gene_summary.txt']
+                    ).collect{ path("${outputDir}/${it}") },
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+
+                // Assert MAGeCK MLE created the right output files
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_1000X/mageck_mle/test.1000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_2000X/mageck_mle/test.2000X.sgrna_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.gene_summary.txt").exists() },
+                { assert path("${outputDir}/analysis_3000X/mageck_mle/test.3000X.sgrna_summary.txt").exists() },
+            )
+        }
+    }
+
+    test("Multi Character Aliquot Names") {
+        tag "multichar_aliquot"
+
+        when {
+            params {
+                // define parameters here. Example:
+                fastq_dir                  = "${baseDir}/${testDataDir}/testdata"
+                metadata                   = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_aliquot_names.csv"
+                library                    = "${baseDir}/${testDataDir}/library.txt"
+                outdir                     = "${outputDir}"
+                prefix                     = "test"
+
+                metadata_format            = "illumina"
+
+                run_mageck_mle             = false
+                run_mageck_test            = false
+
+                count_program              = "mageck"
+                normalization_method       = "median"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    path("${outputDir}/test.metadata.yaml"),
+                    path("${outputDir}/guide_counts/test.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.count_report.Rmd"),
+                    path("${outputDir}/guide_counts/test.countsummary.txt"),
+                    path("${outputDir}/guide_counts/test.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.txt"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count.yml"),
+                    path("${outputDir}/guide_counts/test.max_1000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_2000X.count_normalized.txt"),
+                    path("${outputDir}/guide_counts/test.max_3000X.count_normalized.txt"),
+                    path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
+                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
+                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
+                ).match() },
+
+                { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
+                { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
+                { assert path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },
+            )
+        }
+    }
+}

@@ -68,7 +68,7 @@ if (params.library) {
     exit 1, 'Library parameter not specified!'
 }
 
-if (params.prefix) { 
+if (params.prefix) {
     ch_prefix = params.prefix
 } else {
     exit 1, 'Prefix parameter not specified!'
@@ -154,8 +154,9 @@ include { GUIDE_COUNTS_REP } from '../subworkflows/local/guide_counts_rep_subwor
     IMPORT MODULES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { SAMPLE_META_MODULE_ILLUM } from '../modules/local/sample_meta_illumina.nf'
-include { SAMPLE_META_MODULE } from '../modules/local/sample_meta_module.nf'
+include { PARSE_METADATA_CSV } from '../modules/local/parse_metadata_csv.nf'
+include { PARSE_METADATA_ILLUMINA } from '../modules/local/parse_metadata_illumina.nf'
+include { VALIDATE_METADATA } from '../modules/local/validate_metadata.nf'
 include { MAGECK_REPORT_HTML } from '../modules/local/guide_generate_mageck_report'
 include { GUIDE_CORR_REP_TOTAL } from '../modules/local/guide_correlation_total_table.nf'
 include { GUIDE_COUNT_QC_MODULE } from '../modules/local/guide_count_qc_module.nf'
@@ -175,25 +176,27 @@ include { MAGECK_TEST                 } from '../modules/nf-core/mageck/test/mai
 workflow POOLED_SCREEN {
 
     ch_versions = Channel.empty()
-    def META_MOD_OUT_YAML
-    def META_MOD_OUT_VERSIONS
+    def PARSED_METADATA_YAML
+    def PARSED_METADATA_VERSIONS
     if (ch_table_format == 'illumina') {
-        SAMPLE_META_MODULE_ILLUM(ch_input,
-            ch_metadata,
-            ch_prefix)
-        META_MOD_OUT_YAML = SAMPLE_META_MODULE_ILLUM.out.sample_meta_yaml
-        META_MOD_OUT_VERSIONS = SAMPLE_META_MODULE_ILLUM.out.versions
+        PARSE_METADATA_ILLUMINA(ch_metadata, ch_prefix)
+        PARSED_METADATA_YAML = PARSE_METADATA_ILLUMINA.out.meta_yaml
+        PARSED_METADATA_VERSIONS = PARSE_METADATA_ILLUMINA.out.versions
     } else {
         // if it is not illumina, it is assumed to be csv cause it would have broken earlier if nothing is specified
-        SAMPLE_META_MODULE(ch_input,
-            ch_metadata,
-            ch_prefix)
-        META_MOD_OUT_YAML = SAMPLE_META_MODULE.out.sample_meta_yaml
-        META_MOD_OUT_VERSIONS = SAMPLE_META_MODULE.out.versions
-  
+        PARSE_METADATA_CSV(ch_metadata, ch_prefix)
+        PARSED_METADATA_YAML = PARSE_METADATA_CSV.out.meta_yaml
+        PARSED_METADATA_VERSIONS = PARSE_METADATA_CSV.out.versions
     }
-    // check if SAMPLE_META.out.sample_meta_yaml has multiple read entries
-    META_MOD_OUT_YAML
+
+    def VALIDATED_METADATA_YAML
+    def VALIDATED_METADATA_VERSIONS
+    VALIDATE_METADATA(PARSED_METADATA_YAML, ch_input, ch_prefix)
+    VALIDATED_METADATA_YAML = VALIDATE_METADATA.out.meta_yaml
+    VALIDATED_METADATA_VERSIONS = VALIDATE_METADATA.out.versions
+
+    // check if validated metadata YAML has multiple read entries
+    VALIDATED_METADATA_YAML
         .map { PooledUtils.multipleRead(it) }
         .set { multi_read }
 
@@ -203,20 +206,19 @@ workflow POOLED_SCREEN {
 
     if (params.count_program == 'mageck') {
         // store labels and fastqfiles in channels from PooledUtils.get_labels_fastq_list
-        META_MOD_OUT_YAML
+        VALIDATED_METADATA_YAML
             .map { PooledUtils.getSampleLabelFastqMapForMageck(it) }
             .multiMap{ it ->
                 labels: it[0]
                 fastq_list: it[1]
                 grp: it[2]
                 is_ref: it[3]
-                
             }
             .set { result }
         labels = result.labels
         fastq_list = result.fastq_list
 
-        ch_versions = ch_versions.mix(META_MOD_OUT_VERSIONS)
+        ch_versions = ch_versions.mix(PARSED_METADATA_VERSIONS, VALIDATED_METADATA_VERSIONS)
         // TODO: make sure the multiple read_* is comma separated when building the fastq file input arg
         MAGECK_COUNT (
             ch_input,
@@ -236,7 +238,7 @@ workflow POOLED_SCREEN {
 
         GUIDE_COUNTS_REP (
             MAGECK_COUNT.out.count,
-            META_MOD_OUT_YAML,
+            VALIDATED_METADATA_YAML,
             ch_prefix
         )
         ch_versions = ch_versions.mix(GUIDE_COUNTS_REP.out.versions)

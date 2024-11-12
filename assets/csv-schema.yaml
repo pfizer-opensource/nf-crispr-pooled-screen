@@ -1,0 +1,16 @@
+samples:
+  section: Samples
+  type: tabular
+
+  delimiter: "_"
+
+  required:
+    - aliquot
+    - condition
+    - group
+    - replicate
+    - representation
+    - sample
+
+  optional:
+    - reference

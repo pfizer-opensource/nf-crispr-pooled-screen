@@ -1,0 +1,35 @@
+nextflow_process {
+    process "PARSE_METADATA_ILLUMINA"
+    name "Test Process PARSE_METADATA_ILLUMINA"
+
+    tag "metadata"
+    tag "parse_metadata"
+    tag "parse_metadata_illumina"
+
+    script "modules/local/parse_metadata_illumina.nf"
+
+    // Note: test data is not included in public release
+
+    test("Illumina Sample Sheet Parsing") {
+        when {
+            params {
+                metadata  = "${baseDir}/tests/test-datasets/metadata/pooled_screen_meta_ilmn.csv"
+                prefix    = "test"
+                outdir    = outputDir
+            }
+
+            process {
+                """
+                input[0] = params.metadata
+                input[1] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.meta_yaml.get(0) ==~ ".*/${params.prefix}.parsed-metadata.yaml"
+            assert snapshot(process.out.meta_yaml).match()
+        }
+    }
+}

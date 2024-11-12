@@ -2,7 +2,7 @@ process GUIDE_COUNT_REP_MODULE {
     tag "CountRepresentations"
     label 'process_low'
 
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
+    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
 
     input:
     path count_file

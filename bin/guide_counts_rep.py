@@ -228,8 +228,8 @@ class Count:
                     'group_rep': group_rep,
                     'sample_rep_val': pcr_rep_val,
                     }
-                if 'reference' in self.meta_data[sample_names[0]].keys():
-                    tmp_dict[col_name]['reference'] = self.meta_data[sample_names[0]]['reference']
+                if (reference := self.meta_data[sample_names[0]].get("reference")) is not None:
+                    tmp_dict[col_name]['reference'] = reference
                 else:
                     tmp_dict[col_name]['is_ref'] = self.meta_data[sample_names[0]].get('is_ref', 0)
                 representation = max(pcr_rep_val,representation)

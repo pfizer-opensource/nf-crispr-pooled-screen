@@ -2,7 +2,11 @@ process MAGECK_COUNT {
     tag "MageckCount"
     label 'process_low'
 
+<<<<<<< HEAD
     container "artifacts.example.com/nextflow/mageck:0.5.9.4"
+=======
+    container "artifacts.example.com/functional-genomics/mageck_pfizer:latest"
+>>>>>>> 05f7497 (Release v1.0)
 
     input:
     path fastqfolder

@@ -2,7 +2,7 @@ process GUIDE_COUNT_QC_MODULE {
     tag "GuideCounts"
     label 'process_low'
 
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
+    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
 
     input:
     tuple val(representation), val(count_file_label), path(count_file), path(samples_yml)

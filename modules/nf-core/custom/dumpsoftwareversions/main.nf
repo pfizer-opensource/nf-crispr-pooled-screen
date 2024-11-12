@@ -1,9 +1,9 @@
 process CUSTOM_DUMPSOFTWAREVERSIONS {
     label 'process_single'
 
-    // Requires `pyyaml` which does not have a dedicated container but is in the functional_genomics container
-    
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
+    // Requires `pyyaml` which does not have a dedicated container but is in the crispr_pooled_screen container
+
+    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
 
     input:
     path versions
