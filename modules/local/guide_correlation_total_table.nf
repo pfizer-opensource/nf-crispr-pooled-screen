@@ -1,8 +1,7 @@
 process GUIDE_CORR_REP_TOTAL {
     tag "GuideCountsCorrTable"
     label 'process_low'
-
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
+    label 'image_crispr_pooled_screen'
 
     input:
     path (correlation_representation)

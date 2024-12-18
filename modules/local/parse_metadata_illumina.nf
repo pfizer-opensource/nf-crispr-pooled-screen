@@ -1,8 +1,7 @@
 process PARSE_METADATA_ILLUMINA {
     tag "ParseIlluminaMetadata"
     label 'process_low'
-
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
+    label 'image_crispr_pooled_screen'
 
     input:
         path metadata

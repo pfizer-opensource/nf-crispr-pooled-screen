@@ -1,8 +1,7 @@
 process GUIDE_COUNT_REP_MODULE {
     tag "CountRepresentations"
     label 'process_low'
-
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
+    label 'image_crispr_pooled_screen'
 
     input:
     path count_file

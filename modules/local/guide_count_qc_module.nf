@@ -1,8 +1,7 @@
 process GUIDE_COUNT_QC_MODULE {
     tag "GuideCounts"
     label 'process_low'
-
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
+    label 'image_crispr_pooled_screen'
 
     input:
     tuple val(representation), val(count_file_label), path(count_file), path(samples_yml)
