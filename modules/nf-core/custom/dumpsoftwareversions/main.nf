@@ -2,8 +2,7 @@ process CUSTOM_DUMPSOFTWAREVERSIONS {
     label 'process_single'
 
     // Requires `pyyaml` which does not have a dedicated container but is in the crispr_pooled_screen container
-
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
+    label 'image_crispr_pooled_screen'
 
     input:
     path versions

@@ -1,8 +1,7 @@
 process MAGECK_REPORT_HTML {
     tag "MageckReport"
     label 'process_low'
-
-    container "artifacts.example.com/functional-genomics/mageck_report_html:latest"
+    label 'image_mageck_report_html'
 
     input:
     path report_rmd_file

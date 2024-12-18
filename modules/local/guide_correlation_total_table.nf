@@ -1,12 +1,7 @@
 process GUIDE_CORR_REP_TOTAL {
     tag "GuideCountsCorrTable"
     label 'process_low'
-
-<<<<<<< HEAD
-    container "artifacts.example.com/nextflow/functional_genomics:0.0.3"
-=======
-    container "artifacts.example.com/functional-genomics/crispr_pooled_screen:latest"
->>>>>>> 05f7497 (Release v1.0)
+    label 'image_crispr_pooled_screen'
 
     input:
     path (correlation_representation)

@@ -115,14 +115,19 @@ if (params.annotate_dictionary) {
 if (params.run_mageck_mle) {
     if (params.design_matrix) {
         try {
+            // params.design_matrix is a comma-separated list of paths, where each path can
+            // be prefixed with an optional analysis name associated with the design matrix.
+            // A colon is used as delimiter, but since that is also part of S3 (and other)
+            // URLs, no splitting is done if '://' is present. This overall approach could
+            // be improved on in the future to avoid edge cases with colons in paths
             ch_design_matrix = Channel
                 .fromList( params.design_matrix.split(',') as List )
                 .map {
                     def parts = it.split(':', 2)
-                    if (parts.size() == 1) {
-                        [ prefix: '', file: file(parts[0], checkIfExists: true) ]
+                    if (it.contains('://') || parts.size() == 1) {
+                        [ analysis_name: '', file: file(it, checkIfExists: true) ]
                     } else {
-                        [ prefix: parts[0], file: file(parts[1], checkIfExists: true) ]
+                        [ analysis_name: parts[0], file: file(parts[1], checkIfExists: true) ]
                     }
                 }
         } catch (java.nio.file.NoSuchFileException e) {
@@ -259,7 +264,7 @@ workflow POOLED_SCREEN {
                 .combine(ch_design_matrix)
                 .multiMap { label, _, count_file, count_yaml, design_matrix ->
                     def prefix = ch_prefix
-                    prefix += (design_matrix.prefix ? ".${design_matrix.prefix}" : '')
+                    prefix += (design_matrix.analysis_name ? ".${design_matrix.analysis_name}" : '')
                     prefix += (label ? ".${label}X" : '')
                     sample: [[id: prefix, representation: label], count_file]
                     design_matrix: design_matrix.file
