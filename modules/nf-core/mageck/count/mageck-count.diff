@@ -1,0 +1,145 @@
+Changes in component 'nf-core/mageck/count'
+'modules/nf-core/mageck/count/environment.yml' is unchanged
+Changes in 'mageck/count/main.nf':
+--- modules/nf-core/mageck/count/main.nf
++++ modules/nf-core/mageck/count/main.nf
+@@ -10,10 +10,14 @@
+     input:
+     tuple val(meta), path(inputfile)
+     path(library)
++    path(control_sgrna)
+ 
+     output:
+-    tuple val(meta), path("*count.txt")           , emit: count
++    tuple val(meta), path("*.count.txt")           , emit: count
+     tuple val(meta), path("*.count_normalized.txt"), emit: norm
++    tuple val(meta), path("*.countsummary.txt")    , emit: summary
++    tuple val(meta), path("*.count_report.Rmd")    , emit: report
++    tuple val(meta), path("*.log")                 , emit: logs
+     path "versions.yml"                            , emit: versions
+ 
+     when:
+@@ -21,8 +25,24 @@
+ 
+     script:
+     def args = task.ext.args ?: ''
++    args += control_sgrna ? " --control-sgrna=${control_sgrna}" : ""
+     def prefix = task.ext.prefix ?: "${meta.id}"
+-    def input_file = ("$inputfile".endsWith(".fastq.gz")) ? "--fastq ${inputfile}" : "-k ${inputfile}"
++
++    def is_fastq = "$inputfile".endsWith(".fastq.gz") || "$inputfile".endsWith(".fq.gz")
++    if (is_fastq) {
++        // For FASTQ input, `inputfile` is a list of FASTQ files and `meta.id` is a
++        // comma-separated string of sample names in the same order. FASTQ files with the
++        // same sample name (ie, technical replicates) are represented as a comma-
++        // separated string of filenames, then filenames for different samples are space-
++        // separated. `meta.id` is reduced to a comma-separated string of unique names.
++        def samples = [meta.id.split(','), inputfile]
++            .transpose()
++            .groupBy { it[0] }
++            .collectEntries { k, v -> [(k): v.flatten().tail().join(",")] }
++        inputfile = samples.values().join(" ")
++        meta.id = samples.keySet().join(",")
++    }
++    def input_file = ("$inputfile".endsWith(".fastq.gz") || "$inputfile".endsWith(".fq.gz")) ? "--fastq ${inputfile}" : "-k ${inputfile}"
+     def sample_label = ("$inputfile".endsWith(".fastq.gz") || "$inputfile".endsWith(".fq.gz")) ? "--sample-label ${meta.id}" : ''
+ 
+     """
+@@ -33,6 +53,8 @@
+         -n $prefix \\
+         $sample_label \\
+         $input_file \\
++
++    mv "${prefix}.log" mageck_count.log
+ 
+ 
+     cat <<-END_VERSIONS > versions.yml
+@@ -48,6 +70,9 @@
+     """
+     touch ${prefix}.count.txt
+     touch ${prefix}.count_normalized.txt
++    touch ${prefix}.countsummary.txt
++    touch ${prefix}.count_report.Rmd
++    touch ${prefix}.log
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+         mageck: \$(mageck -v)
+
+Changes in 'mageck/count/meta.yml':
+--- modules/nf-core/mageck/count/meta.yml
++++ modules/nf-core/mageck/count/meta.yml
+@@ -30,6 +30,10 @@
+         type: file
+         description: library file containing the sgRNA and gene name
+         pattern: "*.{csv,txt,tsv}"
++  - - control_sgrna:
++        type: file
++        description: file containing negative control sgRNAs
++        pattern: "*.txt"
+ output:
+   - count:
+       - meta:
+@@ -37,10 +41,11 @@
+           description: |
+             Groovy Map containing sample information
+             e.g. [ id:'test', single_end:false ]
+-      - "*count.txt":
++      - "*.count.txt":
+           type: file
+-          description: File containing read counts
+-          pattern: "*.countsummary.txt"
++          description: |
++            Count table
++          pattern: "*.count.txt"
+   - norm:
+       - meta:
+           type: map
+@@ -49,8 +54,42 @@
+             e.g. [ id:'test', single_end:false ]
+       - "*.count_normalized.txt":
+           type: file
+-          description: File containing normalized read counts
++          description: |
++            Normalized count table
+           pattern: "*.count_normalized.txt"
++  - summary:
++      - meta:
++          type: map
++          description: |
++            Groovy Map containing sample information
++            e.g. [ id:'test', single_end:false ]
++      - "*.countsummary.txt":
++          type: file
++          description: |
++            Summary of sgRNA counting
++          pattern: "*.countsummary.txt"
++  - report:
++      - meta:
++          type: map
++          description: |
++            Groovy Map containing sample information
++            e.g. [ id:'test', single_end:false ]
++      - "*.count_report.Rmd":
++          type: file
++          description: |
++            R-markdown file with count report
++          pattern: "*.count_report.Rmd"
++  - logs:
++      - meta:
++          type: map
++          description: |
++            Groovy Map containing sample information
++            e.g. [ id:'test', single_end:false ]
++      - "*.log":
++          type: file
++          description: |
++            Log file
++          pattern: "*.log"
+   - versions:
+       - versions.yml:
+           type: file
+
+'modules/nf-core/mageck/count/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/mageck/count/tests/main.nf.test' is unchanged
+'modules/nf-core/mageck/count/tests/tags.yml' is unchanged
+************************************************************

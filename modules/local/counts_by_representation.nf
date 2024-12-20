@@ -1,18 +1,18 @@
-process GUIDE_COUNT_REP_MODULE {
+process COUNTS_BY_REPRESENTATION {
     tag "CountRepresentations"
     label 'process_low'
     label 'image_crispr_pooled_screen'
 
     input:
-    path count_file
-    path sample_meta_yaml
+    tuple val(meta), path(count_file)
+    path metadata_yaml
     val prefix
 
     output:
     stdout emit: console_output
-    path '*.output_file_map.yml', emit: out_file_map
-    path "*.count.txt", emit: rep_count_files
-    path "*.count.yml", emit: rep_count_files_yml
+    path '*.output_file_map.yml', emit: repr_name_map
+    path "*.count.txt", emit: counts
+    path "*.count.yml", emit: meta_yamls
     path "versions.yml", emit: versions
 
     when:
@@ -20,9 +20,9 @@ process GUIDE_COUNT_REP_MODULE {
 
     script: // This script is bundled with the pipeline, in nf/pooled_screen/bin/
     """
-    guide_counts_rep.py \\
+    guide_count_by_representation.py \\
         --count_file="${count_file}" \\
-        --sample_meta_yaml="${sample_meta_yaml}" \\
+        --sample_meta_yaml="${metadata_yaml}" \\
         --prefix="${prefix}." \\
         --output_file_map="${prefix}.output_file_map.yml"
 

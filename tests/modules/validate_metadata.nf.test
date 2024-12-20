@@ -14,12 +14,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_ILLUMINA") {
-                script "modules/local/parse_metadata_illumina.nf"
+                script "modules/pfizer-rd/parse_metadata/illumina/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -35,7 +34,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[0] = PARSE_METADATA_ILLUMINA.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -54,12 +53,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_CSV") {
-                script "modules/local/parse_metadata_csv.nf"
+                script "modules/pfizer-rd/parse_metadata/csv/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -75,7 +73,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[0] = PARSE_METADATA_CSV.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -94,12 +92,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_ILLUMINA") {
-                script "modules/local/parse_metadata_illumina.nf"
+                script "modules/pfizer-rd/parse_metadata/illumina/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -115,7 +112,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[0] = PARSE_METADATA_ILLUMINA.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -135,12 +132,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_ILLUMINA") {
-                script "modules/local/parse_metadata_illumina.nf"
+                script "modules/pfizer-rd/parse_metadata/illumina/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -156,7 +152,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[0] = PARSE_METADATA_ILLUMINA.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -175,12 +171,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_ILLUMINA") {
-                script "modules/local/parse_metadata_illumina.nf"
+                script "modules/pfizer-rd/parse_metadata/illumina/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -196,7 +191,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[0] = PARSE_METADATA_ILLUMINA.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -215,12 +210,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_ILLUMINA") {
-                script "modules/local/parse_metadata_illumina.nf"
+                script "modules/pfizer-rd/parse_metadata/illumina/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -236,7 +230,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_ILLUMINA.out.meta_yaml
+                input[0] = PARSE_METADATA_ILLUMINA.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -255,12 +249,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_CSV") {
-                script "modules/local/parse_metadata_csv.nf"
+                script "modules/pfizer-rd/parse_metadata/csv/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -276,7 +269,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[0] = PARSE_METADATA_CSV.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """
@@ -294,12 +287,11 @@ nextflow_process {
 
         setup {
             run("PARSE_METADATA_CSV") {
-                script "modules/local/parse_metadata_csv.nf"
+                script "modules/pfizer-rd/parse_metadata/csv/main.nf"
 
                 process {
                     """
                     input[0] = params.metadata
-                    input[1] = params.prefix
                     """
                 }
             }
@@ -315,7 +307,7 @@ nextflow_process {
 
             process {
                 """
-                input[0] = PARSE_METADATA_CSV.out.meta_yaml
+                input[0] = PARSE_METADATA_CSV.out.metadata_yaml
                 input[1] = params.fastq_dir
                 input[2] = params.prefix
                 """

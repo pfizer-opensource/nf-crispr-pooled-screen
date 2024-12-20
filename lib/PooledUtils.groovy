@@ -2,170 +2,123 @@
 // This file holds several Groovy functions
 //
 @Grab(group='org.codehaus.groovy', module='groovy-yaml', version='3.0.16')
+
+import java.nio.file.Path
+
 import groovy.yaml.YamlSlurper
+import nextflow.Nextflow
 
 
 class PooledUtils {
     /**
-    * Get a List of all the keys in the sample meta yml file 
-    * that are marked as 'is_ref'.
+    * Validate that a file path exists and return as a Path object,
+    * or return an appropriate Nextflow error message.
     */
-    public static List findReferences(sample_meta){
-        def samples = new YamlSlurper().parse(sample_meta)["samples"]
-        
-        List l = samples.findAll {it.value.is_ref}
-                .collect{entry -> entry.key}
-        return l
-        
+    public static Path validatePathParam(path, param_name, is_dir = false) {
+        try {
+            Path file = Nextflow.file(path, checkIfExists: true)
+            if (is_dir && !file.isDirectory()) {
+                throw new java.nio.file.NotDirectoryException(path)
+            }
+            return file
+        } catch (java.nio.file.NoSuchFileException e) {
+            // return the error message if the path does not exist
+            Nextflow.error "The path " + e.getMessage() + " does not exist"
+        } catch (java.nio.file.NotDirectoryException e) {
+            // return the error message if the path is not a directory
+            Nextflow.error "The path " + e.getMessage() + " is not a directory!"
+        } catch (java.nio.file.AccessDeniedException e) {
+            // return the error message if the path cannot be accessed
+            Nextflow.error "The path " + e.getMessage() + " cannot be accessed!"
+        } catch (e) {
+            // return everything else
+            Nextflow.error "The ${param_name} parameter definition failed with following reason " + e
+        }
     }
-    public static List createMageckTestArgumentListIllumina(sample_meta){
+
+    /**
+    * Create a list of Maps containing the values needed to run MAGeCK test for
+    * each contrast.
+    */
+    public static List createMageckTestContrasts(sample_meta){
         def samples = new YamlSlurper().parse(sample_meta)
         
-        def mapByGroup= samples.collectEntries{key, value-> [key, [group: value.group, reference: value.reference] ]}
-                        .groupBy {it.value.group}
-
-        def retList=[]
-        for(entry in mapByGroup){
-            
-            def referenceCombinations = [:]
-            for(sampleEntry in entry.value){
-                
-                //if a reference value is null then it is skipped or is the control for that sample
-                //so ignore those
-                referenceCombinations.putAll(sampleEntry.value.reference.findAll{it.value !=null})
-            }
-            
-            for(refEntry in referenceCombinations){
-                println(refEntry.key)
-                //we are here if we found non-null reference combinations
-                //if all combinations were null or empty then we skip this group 
-                retList.add([
-                    "group" : entry.key,
-                    "run_mageck_test" : true,
-                    "c" : mapByGroup[refEntry.value].keySet(),
-                    "t": entry.value.keySet(),
-                    "controlGroup": refEntry.value,
-                    "contrast_prefix": refEntry.key
-                ])
-            }
+        def samplesByGroup = samples.collectEntries { key, value ->
+            [key, [group: value.group, reference: value.reference, is_ref: value.is_ref]]
         }
+        .groupBy {it.value.group}
 
-        return retList
-        
-        
-    }
-    
-     /**
-    * Create a Map of the arguments for the call to MAGECK test.
-    The fields are:
-    <ul>
-    <li>c - the reference/control columns</li>
-    <li>t - the test columns.  Note this is a list, one element per invocation</li>
-    </ul>
-    */
-    public static Map createMageckTestArgumentMap(sample_meta){
-        def samples = new YamlSlurper().parse(sample_meta)
+        // In case the samples do not contain a reference key defining the reference
+        // groups, find the reference group with the is_ref key (ie, the group that
+        // has a sample with is_ref set to 1)
+        // TODO: Deprecate the is_ref approach to the reference group in the metadata
+        def refGroup = samplesByGroup.findAll{it.value.any{it.value.is_ref}}*.key[0]
 
-        def argumentMap = [:]
-        argumentMap["group"] = []
-        argumentMap["run_mageck_test"] = false
-        def mapByGroup= samples.collectEntries{key, value-> [key, [group: value.group, is_ref: value.is_ref] ]}
-                        .groupBy {it.value.group}
-
-        for(entry in mapByGroup){
-            def key = entry.key
-            
-            //groups should either all be references or none should be references
-            //so checking for the presence or absence should work
-            if(entry.value.any(v -> v.value.is_ref)){
-                //this is a reference (control group)
-                argumentMap["c"] = entry.value.collect(v-> v.key).join(",")
-                argumentMap["controlGroup"] = key
-                argumentMap["run_mageck_test"] = true
-            }else{
-                if(!argumentMap["t"]){
-                    argumentMap["t"] = [];
+        samplesByGroup.collectMany { group, groupSamples ->
+            // For this group, get a map of the analyses and corresponding reference groups
+            def analysis_refs = groupSamples.collect { _, value ->
+                if (!value.reference) {
+                    // TODO: Remove this after is_ref usage is deprecated
+                    value.reference = ['': (group != refGroup ? refGroup : null)]
                 }
-                argumentMap["t"].add( [entry.value.collect(v -> v.key).join(",")])
-                argumentMap["group"].add(key)
-            }        
-        }
+                // Analyses with no reference value should be ignored (either this
+                // group is not part of that analysis or it is the reference group)
+                value.reference.findAll {it.value != null}
+            }
+            .inject { a, b -> a + b }
 
-        return argumentMap
-       
-    
-    }
-    // check if the yaml file has multiple read entries per sample
-    public static Boolean multipleRead(sample_meta) {
-        def samples = new YamlSlurper().parse(sample_meta)["samples"]
-        def multiple_read = false
-        samples.each {
-            def label = it*.key
-            def value = it*.value
-            if (samples[label[0]].containsKey("read1") && samples[label[0]].containsKey("read2")) {
-                multiple_read = true
+            // For each analysis, create a map with the inputs needed for running MAGeCK
+            // test to contrast this group to the appropriate reference control group
+            analysis_refs.collect { analysis_name, reference ->
+                [
+                    group: group,
+                    samples: groupSamples.keySet(),
+                    refGroup: reference,
+                    refSamples: samplesByGroup[reference].keySet(),
+                    contrast: analysis_name
+                ]
             }
         }
-        return multiple_read
     }
 
-    public static List getSampleLabelFastqMapForMageck(sample_meta) {
-        def samples = new YamlSlurper().parse(sample_meta)["samples"]
+    public static Map getSamplesFastqMap(meta_yaml, fastq_dir) {
+        def samples = new YamlSlurper().parse(meta_yaml)["samples"]
 
-        List sample_lable_file_list = [[],[],[],[],[]]
-
-        samples.each {
-
-            def label = it*.key
-            def value = it*.value
-            if (samples[label[0]].containsKey("read1")) {
-                sample_lable_file_list[0].add(label[0])
-                // The replicates of the same sample are comma separated,
-                // the fastq files are space separated
-                def filename_string = ""
-                for (file in samples[label[0]].read1) {
-                    // add comma to the end of file.toString() to make mageck happy
-                    filename_string = filename_string + file.toString()+','
-                }
-                // remove the last comma
-                filename_string = filename_string.substring(0, filename_string.length() - 1)
-                sample_lable_file_list[1].add(filename_string)
-                sample_lable_file_list[2].add(samples[label[0]].group)
-                if (samples[label[0]].containsKey("is_ref")) {
-                    sample_lable_file_list[3].add(samples[label[0]].is_ref)
-                }                 
+        samples.collect { sample_name, metadata ->
+            def fastqs = [metadata.read1]
+            if (metadata.read2) {
+                fastqs += [metadata.read2]
             }
-            if (samples[label[0]].containsKey("read2")) {
-                sample_lable_file_list[0].add(label[0])
-                def filename_string = ""
-                for (file in samples[label[0]].read2) {
-                    filename_string = filename_string + file.toString()+','
-                }
-                // remove the last comma
-                filename_string = filename_string.substring(0, filename_string.length() - 1)
-                sample_lable_file_list[1].add(filename_string)
 
+            fastqs
+            .transpose()
+            .collect {
+                [
+                    meta: [id: sample_name],
+                    fastqs_r1: [fastq_dir.resolve(it[0])],
+                    fastqs_r2: it[1] ? [fastq_dir.resolve(it[1])] : [],
+                    single_end: it.size() == 1
+                ]
             }
         }
-
-        return sample_lable_file_list
+        .flatten()
+        .inject { a, b ->
+            // Throw an error if the samples are a mix of single-end and paired-end
+            if (a.single_end != b.single_end) {
+                error "Samples contain a mix of single-end and paired-end data."
+            }
+            [
+                meta: [id: "${a.meta.id},${b.meta.id}"],
+                fastqs_r1: a.fastqs_r1 + b.fastqs_r1,
+                fastqs_r2: a.fastqs_r2 + b.fastqs_r2,
+                single_end: b.single_end
+            ]
+        }
     }
 
-    public static List getCountByRepFilesLabel(out_file) {
-        def files = new YamlSlurper().parse(out_file)
-        List label_file_list = [[],[]]
-
-        files.each {
-
-            def label = it*.key
-            def value = it*.value
-
-            label_file_list[0].add(label.join(''))
-            label_file_list[1].add(value.join(''))
-
-        }
-        return label_file_list
+    public static List getRepresentationBasenames(repr_basename_yaml) {
+        def basenames = new YamlSlurper().parse(repr_basename_yaml)
+        basenames.collect { representation, basename -> [basename, representation] }
     }
 
 }
-

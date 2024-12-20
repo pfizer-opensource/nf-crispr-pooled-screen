@@ -1,0 +1,41 @@
+Changes in component 'nf-core/mageck/mle'
+'modules/nf-core/mageck/mle/environment.yml' is unchanged
+Changes in 'mageck/mle/meta.yml':
+--- modules/nf-core/mageck/mle/meta.yml
++++ modules/nf-core/mageck/mle/meta.yml
+@@ -32,6 +32,10 @@
+         type: file
+         description: Design matrix describing the samples and conditions
+         pattern: "*.{txt,tsv}"
++  - - control_sgrna:
++        type: file
++        description: file containing negative control sgRNAs
++        pattern: "*.txt"
+ output:
+   - gene_summary:
+       - meta:
+
+Changes in 'mageck/mle/main.nf':
+--- modules/nf-core/mageck/mle/main.nf
++++ modules/nf-core/mageck/mle/main.nf
+@@ -10,6 +10,7 @@
+     input:
+     tuple val(meta), path(count_table)
+     path(design_matrix)
++    path(control_sgrna)
+ 
+     output:
+     tuple val(meta), path("*.gene_summary.txt") , emit: gene_summary
+@@ -21,6 +22,7 @@
+ 
+     script:
+     def args = task.ext.args ?: ''
++    args += control_sgrna ? " --control-sgrna=${control_sgrna}" : ""
+     def prefix = task.ext.prefix ?: "${meta.id}"
+ 
+     """
+
+'modules/nf-core/mageck/mle/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/mageck/mle/tests/tags.yml' is unchanged
+'modules/nf-core/mageck/mle/tests/main.nf.test' is unchanged
+************************************************************

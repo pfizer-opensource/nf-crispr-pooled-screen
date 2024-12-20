@@ -19,7 +19,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -58,7 +57,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -94,7 +92,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_high_missing_guides.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -131,7 +128,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -167,7 +163,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -203,7 +198,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -234,7 +228,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -267,7 +260,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_one_replicate.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X_one_replicate.yml")
                 input[1] = "${params.prefix}"
@@ -300,7 +292,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("1000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -328,7 +319,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"
@@ -362,7 +352,6 @@ nextflow_process {
             process {
                 """
                 input[0] = tuple("3000",
-                                 "test.count.max_3000X",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.txt",
                                  "$baseDir/tests/test-datasets/guide_counts/test.count.max_3000X.yml")
                 input[1] = "${params.prefix}"

@@ -2,14 +2,15 @@ process MAGECK_MLE {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::mageck=0.5.9"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mageck:0.5.9--py37h6bb024c_0':
-        'biocontainers/mageck:0.5.9--py37h6bb024c_0' }"
+        'https://depot.galaxyproject.org/singularity/mageck:0.5.9.5--py39h1f90b4d_3':
+        'biocontainers/mageck:0.5.9.5--py39h1f90b4d_3' }"
 
     input:
     tuple val(meta), path(count_table)
     path(design_matrix)
+    path(control_sgrna)
 
     output:
     tuple val(meta), path("*.gene_summary.txt") , emit: gene_summary
@@ -21,6 +22,7 @@ process MAGECK_MLE {
 
     script:
     def args = task.ext.args ?: ''
+    args += control_sgrna ? " --control-sgrna=${control_sgrna}" : ""
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
@@ -37,4 +39,18 @@ process MAGECK_MLE {
         mageck: \$(mageck -v)
     END_VERSIONS
     """
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+
+    """
+    touch ${prefix}.gene_summary.txt
+    touch ${prefix}.sgrna_summary.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mageck: \$(mageck -v)
+    END_VERSIONS
+    """
+
+
 }

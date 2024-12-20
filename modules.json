@@ -11,10 +11,23 @@
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/custom/dumpsoftwareversions/custom-dumpsoftwareversions.diff"
                     },
+                    "mageck/count": {
+                        "branch": "master",
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/mageck/count/mageck-count.diff"
+                    },
                     "mageck/mle": {
                         "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": ["modules"]
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/mageck/mle/mageck-mle.diff"
+                    },
+                    "mageck/test": {
+                        "branch": "master",
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/mageck/test/mageck-test.diff"
                     }
                 }
             },
@@ -24,10 +37,15 @@
         },
         "https://github.com/pfizer-rd/nf-core-modules.git": {
             "modules": {
-                "pfizer": {
-                    "mageck_pfizer/count": {
+                "pfizer-rd": {
+                    "parse_metadata/csv": {
                         "branch": "main",
-                        "git_sha": "2c4fc8df392b2b211ec437e4b5fe7d07dad6889b",
+                        "git_sha": "4c3d601414c7c0472d71e55929a02bf772f3837a",
+                        "installed_by": ["modules"]
+                    },
+                    "parse_metadata/illumina": {
+                        "branch": "main",
+                        "git_sha": "4c3d601414c7c0472d71e55929a02bf772f3837a",
                         "installed_by": ["modules"]
                     }
                 }

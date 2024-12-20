@@ -1,0 +1,88 @@
+Changes in component 'nf-core/mageck/test'
+Changes in 'mageck/test/meta.yml':
+--- modules/nf-core/mageck/test/meta.yml
++++ modules/nf-core/mageck/test/meta.yml
+@@ -29,6 +29,10 @@
+           sgRNA name (1st column), target gene (2nd column)
+           and read counts in each sample.
+         pattern: "*.{txt,tsv}"
++  - - control_sgrna:
++        type: file
++        description: file containing negative control sgRNAs
++        pattern: "*.txt"
+ output:
+   - gene_summary:
+       - meta:
+@@ -66,6 +70,28 @@
+             R script allowing to output plots
+             from main hit genes
+           pattern: "*.R"
++  - r_summary:
++      - meta:
++          type: map
++          description: |
++            Groovy Map containing sample information
++            e.g. [ id:'test', single_end:false ]
++      - "*.Rnw":
++          type: file
++          description: |
++            R sweave document to generate a summary report 
++          pattern: "*.Rnw"
++  - logs:
++      - meta:
++          type: map
++          description: |
++            Groovy Map containing sample information
++            e.g. [ id:'test', single_end:false ]
++      - "*.log":
++          type: file
++          description: |
++            Log file
++          pattern: "*.log"
+   - versions:
+       - versions.yml:
+           type: file
+
+'modules/nf-core/mageck/test/environment.yml' is unchanged
+Changes in 'mageck/test/main.nf':
+--- modules/nf-core/mageck/test/main.nf
++++ modules/nf-core/mageck/test/main.nf
+@@ -9,11 +9,14 @@
+ 
+     input:
+     tuple val(meta), path(count_table)
++    path(control_sgrna)
+ 
+     output:
+     tuple val(meta), path("*.gene_summary.txt")  , emit: gene_summary
+     tuple val(meta), path("*.sgrna_summary.txt") , emit: sgrna_summary
+     tuple val(meta), path("*.R")                 , emit: r_script, optional: true
++    tuple val(meta), path("*.Rnw")               , emit: r_summary
++    tuple val(meta), path("*.log")               , emit: logs
+     path "versions.yml"                          , emit: versions
+ 
+     when:
+@@ -21,6 +24,7 @@
+ 
+     script:
+     def args = task.ext.args ?: ''
++    args += control_sgrna ? " --control-sgrna=${control_sgrna}" : ""
+     def prefix = task.ext.prefix ?: "${meta.id}"
+ 
+     """
+@@ -43,6 +47,8 @@
+     touch ${prefix}.gene_summary.txt
+     touch ${prefix}.sgrna_summary.txt
+     touch ${prefix}.R
++    touch ${prefix}.Rnw
++    touch ${prefix}.log
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+
+'modules/nf-core/mageck/test/tests/tags.yml' is unchanged
+'modules/nf-core/mageck/test/tests/main.nf.test' is unchanged
+'modules/nf-core/mageck/test/tests/nextflow-day0_label.config' is unchanged
+'modules/nf-core/mageck/test/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/mageck/test/tests/nextflow.config' is unchanged
+************************************************************

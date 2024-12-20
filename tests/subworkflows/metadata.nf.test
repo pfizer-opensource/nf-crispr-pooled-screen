@@ -1,0 +1,97 @@
+def testDataDir = "tests/test-datasets"  // Note: test data is not included in public release
+
+nextflow_workflow {
+
+    name "Test Subworkflow LOAD_METADATA"
+    script "subworkflows/local/metadata.nf"
+    workflow "LOAD_METADATA"
+
+    tag "load_metadata"
+
+    test("Load Metadata from Illumina Sample Sheet") {
+        tag "load_metadata_illumina"
+
+        when {
+            params {
+                metadata        = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                metadata_format = "illumina"
+                fastq_dir       = "${baseDir}/${testDataDir}/testdata"
+                prefix          = "test"
+            }
+
+            workflow {
+                """
+                input[0] = params.metadata
+                input[1] = params.metadata_format
+                input[2] = params.fastq_dir
+                input[3] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.meta_yaml).match() },
+            )
+        }
+    }
+
+    test("Load Metadata from CSV") {
+        tag "load_metadata_csv"
+
+        when {
+            params {
+                metadata        = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_csv_table.csv"
+                metadata_format = "csv"
+                fastq_dir       = "${baseDir}/${testDataDir}/testdata"
+                prefix          = "test"
+            }
+
+            workflow {
+                """
+                input[0] = params.metadata
+                input[1] = params.metadata_format
+                input[2] = params.fastq_dir
+                input[3] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.meta_yaml).match() },
+            )
+        }
+    }
+
+    test("Unrecognized Metadata Format") {
+        tag "load_metadata_bad_format"
+
+        when {
+            params {
+                metadata        = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                metadata_format = "bad_format"
+                fastq_dir       = "${baseDir}/${testDataDir}/testdata"
+                prefix          = "test"
+            }
+
+            workflow {
+                """
+                input[0] = params.metadata
+                input[1] = params.metadata_format
+                input[2] = params.fastq_dir
+                input[3] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("Unrecognized metadata format: bad_format") },
+            )
+        }
+    }
+}
