@@ -1,0 +1,47 @@
+---
+name: PARSE_METADATA_CSV
+
+description: |
+  Parse raw CSV data, guided by a YAML-based mapping schema, into a
+  standardised YAML output.
+
+keywords:
+  - CSV
+  - YAML
+  - parse
+  - metadata
+
+tools:
+  - illumina-sample-sheet-parser:
+      description: Illumina Sample Sheet parser
+      documentation: https://github.com/pfizer-rd/nf-core-modules/blob/main/modules/pfizer/parse_metadata/README.md
+      licence:
+        - Proprietary
+
+input:
+  - - metadata_csv:
+        type: file
+        description: Raw CSV input
+        pattern: "*.csv"
+
+output:
+  - metadata_yaml:
+    - "parsed-metadata.yaml":
+        type: file
+        description: Mapped, standardised YAML output
+
+  - versions:
+    - "versions.yml":
+        type: file
+        description: Software versions manifest
+
+  - log:
+    - "parse-metadata.log":
+        type: file
+        description: CSV parsing log
+
+authors:
+  - Christopher Harrison <christopher.harrison@moduscreate.com>
+
+maintainers:
+  - Jason Arroyo <jason.arroyo@pfizer.com>

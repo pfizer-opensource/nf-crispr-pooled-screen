@@ -550,10 +550,6 @@ nextflow_pipeline {
                     path("${outputDir}/guide_qc/test.max_1000X.guide_data_long.tsv"),
                     path("${outputDir}/guide_qc/test.max_2000X.guide_data_long.tsv"),
                     path("${outputDir}/guide_qc/test.max_3000X.guide_data_long.tsv"),
-                    path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv"),
-                    path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv"),
-                    path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv"),
-                    path("${outputDir}/guide_qc/test.replicates_cor.tsv"),
 
                     // Include the paths for the MAGeCK test output files to ensure that
                     // all of the correct pairwise combinations were run
@@ -568,7 +564,11 @@ nextflow_pipeline {
                 { assert path("${outputDir}/guide_counts/mageck_count.log").exists() },
                 { assert path("${outputDir}/guide_qc/test.mageck_count_report.nb.html").exists() },
 
-                // Assert that correlation plots are missing
+                // Assert that correlation files are missing
+                { assert ! path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.tsv").exists() },
+                { assert ! path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.tsv").exists() },
+                { assert ! path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.tsv").exists() },
+                { assert ! path("${outputDir}/guide_qc/test.replicates_cor.tsv").exists() },
                 { assert ! path("${outputDir}/guide_qc/test.max_1000X.replicates_cor.pdf").exists() },
                 { assert ! path("${outputDir}/guide_qc/test.max_2000X.replicates_cor.pdf").exists() },
                 { assert ! path("${outputDir}/guide_qc/test.max_3000X.replicates_cor.pdf").exists() },

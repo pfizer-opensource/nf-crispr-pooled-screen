@@ -4,7 +4,7 @@ process GUIDE_COUNT_QC_MODULE {
     label 'image_crispr_pooled_screen'
 
     input:
-    tuple val(representation), val(count_file_label), path(count_file), path(samples_yml)
+    tuple val(representation), path(count_file), path(samples_yml)
     val prefix
     path control_guides
     path annotate_dict
@@ -12,7 +12,7 @@ process GUIDE_COUNT_QC_MODULE {
     output:
     path '*.count_normalized.txt', emit: normalizedtables
     path '*.guide_data_long.tsv', emit: longshapetables
-    path '*.replicates_cor.tsv', emit: correlationtables
+    path '*.replicates_cor.tsv', emit: correlationtables, optional: true
     path '*.replicates_cor.pdf', emit: pdf, optional: true
     path "versions.yml", emit: versions
 

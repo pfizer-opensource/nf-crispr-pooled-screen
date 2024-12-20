@@ -4,7 +4,7 @@ process MAGECK_REPORT_HTML {
     label 'image_mageck_report_html'
 
     input:
-    path report_rmd_file
+    tuple val(meta), path(report_rmd_file)
     val prefix
 
     output:

@@ -203,7 +203,8 @@ def get_fastqs(fastq_dir: Path) -> Iterator[SampleFastq]:
     @return  Iterator of parsed FASTQ files
     """
     yield from [
-        SampleFastq(fastq) for fastq in fastq_dir.glob("*.fastq*") if fastq.is_file()
+        SampleFastq(fastq.relative_to(fastq_dir)) for fastq in fastq_dir.glob("**/*.fastq*")
+            if fastq.is_file()
     ]
 
 

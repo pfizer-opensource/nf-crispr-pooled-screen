@@ -1,0 +1,194 @@
+def testDataDir = "tests/test-datasets"  // Note: test data is not included in public release
+
+nextflow_pipeline {
+
+    name "Test Parameter Validation"
+    tag "param_validation"
+    script "main.nf"
+
+    test("Missing Required Parameters") {
+        tag "param_missing_required"
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("Missing required parameter: --fastq_dir") },
+                { assert workflow.stdout.join(" ").contains("Missing required parameter: --metadata") },
+                { assert workflow.stdout.join(" ").contains("Missing required parameter: --library") },
+                { assert workflow.stdout.join(" ").contains("Missing required parameter: --prefix") },
+            )
+        }
+    }
+
+    test("FASTQ Directory Path Does Not Exist") {
+        tag "param_fastq_dir_nonexistent"
+        tag "param_fastq_dir"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/test"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.fastq_dir} does not exist") },
+            )
+        }
+    }
+
+    test("FASTQ Directory Path Not a Directory") {
+        tag "param_fastq_dir_not_dir"
+        tag "param_fastq_dir"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/library.txt"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.fastq_dir} is not a directory") },
+            )
+        }
+    }
+
+    test("Metadata Path Does Not Exist") {
+        tag "param_metadata_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.metadata} does not exist") },
+            )
+        }
+    }
+
+    test("Library Path Does Not Exist") {
+        tag "param_library_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/lib.txt"
+                prefix              = "test"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.library} does not exist") },
+            )
+        }
+    }
+
+    test("Control Guides Path Does Not Exist") {
+        tag "param_control_guides_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+
+                control_guides      = "${baseDir}/${testDataDir}/control.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.control_guides} does not exist") },
+            )
+        }
+    }
+
+    test("Annotation Dictionary Path Does Not Exist") {
+        tag "param_annotation_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+
+                annotate_dictionary = "${baseDir}/${testDataDir}/input_sample_table/annotate.yml"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.annotate_dictionary} does not exist") },
+            )
+        }
+    }
+
+    test("Design Matrix Path Does Not Exist") {
+        tag "param_design_matrix_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+
+                run_mageck_mle      = true
+                design_matrix       = "${baseDir}/${testDataDir}/design_matrix/design_matrix.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.design_matrix} does not exist") },
+            )
+        }
+    }
+
+    test("Named Design Matrix Path Does Not Exist") {
+        tag "param_named_design_matrix_nonexistent"
+
+        when {
+            params {
+                fastq_dir           = "${baseDir}/${testDataDir}/testdata"
+                metadata            = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn.csv"
+                library             = "${baseDir}/${testDataDir}/library.txt"
+                prefix              = "test"
+
+                run_mageck_mle      = true
+                design_matrix       = "nonexistent:${baseDir}/${testDataDir}/design_matrix/design_matrix.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.join(" ").contains("The path ${params.design_matrix.split(':')[1]} does not exist") },
+            )
+        }
+    }
+}

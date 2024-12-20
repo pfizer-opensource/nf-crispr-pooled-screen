@@ -1,49 +1,55 @@
 process MAGECK_TEST {
-    tag "${meta.treatment}_${meta.reference}"
+    tag "$meta.id"
     label 'process_medium'
-    debug true
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mageck:0.5.9--py37h6bb024c_0':
-        'biocontainers/mageck:0.5.9--py37h6bb024c_0' }"
+        'https://depot.galaxyproject.org/singularity/mageck:0.5.9.5--py39h1f90b4d_3':
+        'biocontainers/mageck:0.5.9.5--py39h1f90b4d_3' }"
 
     input:
-    val(meta)
-
-   
-    
+    tuple val(meta), path(count_table)
+    path(control_sgrna)
 
     output:
     tuple val(meta), path("*.gene_summary.txt")  , emit: gene_summary
     tuple val(meta), path("*.sgrna_summary.txt") , emit: sgrna_summary
-    tuple val(meta), path("*.R")                 , emit: r_script
+    tuple val(meta), path("*.R")                 , emit: r_script, optional: true
     tuple val(meta), path("*.Rnw")               , emit: r_summary
     tuple val(meta), path("*.log")               , emit: logs
     path "versions.yml"                          , emit: versions
 
     when:
-    (task.ext.when == null || task.ext.when) && meta.shouldRun
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
+    args += control_sgrna ? " --control-sgrna=${control_sgrna}" : ""
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
-    if("${meta.prefix}"){
-        prefix = "${meta.prefix}"
-    }
- 
+
     """
     mageck  \\
         test \\
         $args \\
-        $args2 $meta.treatment \\
-        -c $meta.reference\\
-        -k $meta.count_table \\
+        -k $count_table \\
         -n $prefix
 
-    
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        mageck: \$(mageck -v)
+    END_VERSIONS
+    """
+
+    stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.gene_summary.txt
+    touch ${prefix}.sgrna_summary.txt
+    touch ${prefix}.R
+    touch ${prefix}.Rnw
+    touch ${prefix}.log
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         mageck: \$(mageck -v)

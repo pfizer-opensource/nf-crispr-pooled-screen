@@ -281,13 +281,13 @@ class GuideCounts:
 
         # rename replicate columns to Norm.Count_Rep.x x being the number of replicates
         for replica in replicates:
-            melted.rename(columns={replica:f'Norm.Count_Replica.{replica}'},inplace=True)
+            melted.rename(columns={replica:f'Norm.Count_Rep.{replica}'},inplace=True)
 
         self.long_shape = melted
 
-    def compute_cor(self):
+    def compute_cors(self):
         """
-        Calculate correlation coefficient for each pair of replicates
+        Calculate correlation coefficients for each pair of replicates
         """
 
         def _calc_r_squared(data, repl_pair, log=False):
@@ -298,21 +298,26 @@ class GuideCounts:
             return (repl_data[col_1].corr(repl_data[col_2])) ** 2
 
         groups = self.long_shape.groupby('Group')
-        self.replicate_cor = pd.DataFrame()
 
-        self.replicate_cor['Group'] = groups['Group'].unique().str[0]
-
-        # get the column names that match Norm.Count_Replica
-        replicates = self.long_shape.filter(regex='Norm.Count_Replica').columns.tolist()
+        # get the column names that match Norm.Count_Rep
+        replicates = self.long_shape.filter(regex='Norm.Count_Rep').columns.tolist()
 
         # Pairs of replicates such as 1_2 1_3 2_3
         replicate_pairs = set(itertools.combinations(sorted(replicates), 2))
-        for repl_pair in replicate_pairs:
-            pair_label = f"{repl_pair[0]}_{repl_pair[1]}"
-            self.replicate_cor[f'Cor Squared {pair_label}'] = groups.apply(_calc_r_squared, repl_pair)
-            self.replicate_cor[f'Logged Cor Squared {pair_label}'] = groups.apply(_calc_r_squared, repl_pair, log=True)
 
-        self.replicate_cor["Representation"] = self.representation
+        replicate_cors = []
+        for repl_pair in replicate_pairs:
+            replicate_cors.append(
+                pd.DataFrame({
+                    'Group': groups['Group'].unique().str[0],
+                    'Comparison': f"{repl_pair[0]} vs {repl_pair[1]}",
+                    'Representation': self.representation,
+                    'R-Squared': groups.apply(_calc_r_squared, repl_pair),
+                    'Log-Log R-Squared': groups.apply(_calc_r_squared, repl_pair, log=True),
+                })
+            )
+
+        self.replicate_cors = pd.concat(replicate_cors) if replicate_cors else None
 
     def plot_replicates(self, prefix):
         """
@@ -329,8 +334,8 @@ class GuideCounts:
         plot_data = self.long_shape.copy()
         plot_data = plot_data.sort_values('Group')
 
-        # get the column names that match Norm.Count_Replica
-        replicates = self.long_shape.filter(regex='Norm.Count_Replica').columns.tolist()
+        # get the column names that match Norm.Count_Rep
+        replicates = self.long_shape.filter(regex='Norm.Count_Rep').columns.tolist()
         if len(replicates) == 1:
             logger.warning("Only one replicate was found. No plots were generated.")
             return
@@ -342,7 +347,6 @@ class GuideCounts:
         replicate_pairs = set(itertools.combinations(sorted(replicates), 2))
         pdf_list = []
         for repl_pair in replicate_pairs:
-            pair_label = f"{repl_pair[0]}_{repl_pair[1]}"
             # make the plots in a grid of 2 columns
             grid = sns.FacetGrid(
                 plot_data,
@@ -363,8 +367,8 @@ class GuideCounts:
                 fontsize=12
             )
 
-            # Create the plots where 'Norm.Count_Replica.1' is column name for x axis
-            # series and 'Norm.Count_Replica.2' in y axis.
+            # Create the plots where 'Norm.Count_Rep.1' is column name for x axis
+            # series and 'Norm.Count_Rep.2' in y axis.
             grid.map(
                 sns.regplot,
                 repl_pair[0],repl_pair[1],
@@ -381,8 +385,11 @@ class GuideCounts:
             # squared value computed before
             for ax,title in zip(grid.axes.flat, grid.col_names):
                 # Select the Logged Cor Squared value where the conditions match
-                mask = (self.replicate_cor['Group'] == title)
-                log_corr_sq = self.replicate_cor.loc[mask, f'Logged Cor Squared {pair_label}'].values[0]
+                mask = np.logical_and(
+                    self.replicate_cors['Group'] == title,
+                    self.replicate_cors['Comparison'] == f"{repl_pair[0]} vs {repl_pair[1]}"
+                )
+                log_corr_sq = self.replicate_cors.loc[mask, 'Log-Log R-Squared'].values[0]
 
                 # Make it looking nicer
                 r_sq_label = f'R^2 = {float(log_corr_sq):.3f}'
@@ -398,7 +405,7 @@ class GuideCounts:
                     fontsize=8,
                     xycoords='axes fraction'
                 )
-            pdf_list.append(f"{output_file_base}_{pair_label}.pdf")
+            pdf_list.append(f"{output_file_base}_{repl_pair[0]}_{repl_pair[1]}.pdf")
             grid.savefig(pdf_list[-1])
 
         if len(pdf_list) > 1:
@@ -431,11 +438,12 @@ class GuideCounts:
             index=False
         )
 
-        self.replicate_cor.round(6).to_csv(
-            f'{prefix}max_{self.representation}X.replicates_cor.tsv',
-            sep="\t",
-            index=False
-        )
+        if self.replicate_cors is not None:
+            self.replicate_cors.round(6).to_csv(
+                f'{prefix}max_{self.representation}X.replicates_cor.tsv',
+                sep="\t",
+                index=False
+            )
 
 def define_annotation(annotation_file):
     annotate_dict={}
@@ -486,7 +494,7 @@ def main(argv=None):
 
     guide_counts.normalize_data(args.norm_method)
     guide_counts.long_reshape()
-    guide_counts.compute_cor()
+    guide_counts.compute_cors()
 
     guide_counts.plot_replicates(args.prefix)
     guide_counts.export_tables(args.prefix)

@@ -5,13 +5,17 @@
                 "test.max_3000X.count_normalized.txt:md5,936bce99f87383e35ee369956a84bcf8"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,9239b1430e8dfce3f28c3b1d465d1b31"
+                "test.max_3000X.guide_data_long.tsv:md5,c978ce9b7e96834ffeed3547bde780a3"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,cda1fe739075d144d08d009f2633acc6"
+                "test.max_3000X.replicates_cor.tsv:md5,3963fb06bd004df184ae18027929c946"
             ]
         ],
-        "timestamp": "2024-04-10T20:53:27.238797"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:01:59.485041"
     },
     "With Annotation Dictionary - Multiple Groups Definition": {
         "content": [
@@ -19,13 +23,17 @@
                 "test.max_3000X.count_normalized.txt:md5,8a3c8ea06b7fb89c404565990f102079"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,5c9798fe1e3a1d95ea117ac5145ad169"
+                "test.max_3000X.guide_data_long.tsv:md5,01bd4446b569b72db48e8ea417a8310d"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+                "test.max_3000X.replicates_cor.tsv:md5,56ce2d8c2c1fb8b4bbc9e2ead29cbc81"
             ]
         ],
-        "timestamp": "2024-04-11T18:51:55.277228"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:03:35.793334"
     },
     "Default Guide Count QC": {
         "content": [
@@ -33,13 +41,17 @@
                 "test.max_3000X.count_normalized.txt:md5,8a27a225dd3ad5171835250b06c61dfe"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,7575692bfb5157b78be6dcb4d73d8df9"
+                "test.max_3000X.guide_data_long.tsv:md5,be96c66c9bc18f3d20c2bb294e69708a"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+                "test.max_3000X.replicates_cor.tsv:md5,56ce2d8c2c1fb8b4bbc9e2ead29cbc81"
             ]
         ],
-        "timestamp": "2024-04-11T18:49:44.902262"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:00:45.510735"
     },
     "Median Normalization - Switch to Total Norm with High Missing Guides": {
         "content": [
@@ -47,13 +59,17 @@
                 "test.max_3000X.count_normalized.txt:md5,857c073caffd22ef9e7646225816c5a2"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,9c05fb11f2fac097145d4b5d105f826d"
+                "test.max_3000X.guide_data_long.tsv:md5,976fabcac63388bc53796c35be560bab"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,df55a0d42a9e1e96a2756702f6925adf"
+                "test.max_3000X.replicates_cor.tsv:md5,e687fb6610777d268acd0b85efa9bab8"
             ]
         ],
-        "timestamp": "2024-04-10T20:52:58.429134"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:01:22.578438"
     },
     "Total Normalization": {
         "content": [
@@ -61,13 +77,17 @@
                 "test.max_3000X.count_normalized.txt:md5,0e52af88beb8282ee6a2faf78d050c91"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,2892f99beb1c54a129bd4ec2023db41d"
+                "test.max_3000X.guide_data_long.tsv:md5,e81e51e9d169f62afc6ec5a9bef9fd20"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,63cee4005cc1eea0d1029c2976d5f3d5"
+                "test.max_3000X.replicates_cor.tsv:md5,b53b2fa0bc706c41abe0fb67bd97e1f3"
             ]
         ],
-        "timestamp": "2024-04-10T20:53:12.834968"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:01:41.041439"
     },
     "No Normalization": {
         "content": [
@@ -75,13 +95,17 @@
                 "test.max_3000X.count_normalized.txt:md5,278ce1a3d378d7ddd17737cfa0168179"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,3f41be8f277a546587fea97067471dc6"
+                "test.max_3000X.guide_data_long.tsv:md5,c9008c6d8ed9a7401d35070e3cd04e31"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,e197ed937a5b1b3fa222668ad5bb8510"
+                "test.max_3000X.replicates_cor.tsv:md5,97dccf8c679ae19be03b1c5a572133db"
             ]
         ],
-        "timestamp": "2024-02-10T20:53:56.164177"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:02:31.76736"
     },
     "QC with One Replicate": {
         "content": [
@@ -89,13 +113,16 @@
                 "test.max_3000X.count_normalized.txt:md5,4a2fae09aa1aa8af9bcea843d49278e6"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,f2d13df7527d644ae67562c0a2b8bd81"
+                "test.max_3000X.guide_data_long.tsv:md5,19fcdc4cd0b7cc61c4b512a8db06146a"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,5ec99e39d39393540c59b0ec3ad60f63"
             ]
         ],
-        "timestamp": "2024-04-11T18:51:16.621425"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:02:45.723799"
     },
     "Median Normalization": {
         "content": [
@@ -103,13 +130,17 @@
                 "test.max_3000X.count_normalized.txt:md5,8a27a225dd3ad5171835250b06c61dfe"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,7575692bfb5157b78be6dcb4d73d8df9"
+                "test.max_3000X.guide_data_long.tsv:md5,be96c66c9bc18f3d20c2bb294e69708a"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+                "test.max_3000X.replicates_cor.tsv:md5,56ce2d8c2c1fb8b4bbc9e2ead29cbc81"
             ]
         ],
-        "timestamp": "2024-04-10T20:52:44.015942"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:01:04.17998"
     },
     "With Annotation Dictionary - Single Group Definition": {
         "content": [
@@ -117,12 +148,16 @@
                 "test.max_3000X.count_normalized.txt:md5,bdb38dccd6ca6c726cc0d43b7ac4dae5"
             ],
             [
-                "test.max_3000X.guide_data_long.tsv:md5,28355f1f5afedffc408ecdd8d064ea6e"
+                "test.max_3000X.guide_data_long.tsv:md5,0a2f48fb4178ed38c88e5838a39df0a8"
             ],
             [
-                "test.max_3000X.replicates_cor.tsv:md5,677254f28435e1a7bb4c871db54ace2c"
+                "test.max_3000X.replicates_cor.tsv:md5,56ce2d8c2c1fb8b4bbc9e2ead29cbc81"
             ]
         ],
-        "timestamp": "2024-04-11T18:51:40.670621"
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "23.04.2"
+        },
+        "timestamp": "2025-01-03T21:03:17.693976"
     }
 }

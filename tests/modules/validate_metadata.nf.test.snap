@@ -2,49 +2,49 @@
     "No Group Definition": {
         "content": [
             [
-                "test.metadata.yaml:md5,91c31efe5b340d2962659366eb7c8df2"
+                "test.metadata.yaml:md5,67f4c824efb86503b7f6147a464520bc"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "23.04.2"
         },
-        "timestamp": "2024-12-18T09:38:11.432316"
+        "timestamp": "2024-12-23T14:25:51.233939"
     },
     "Metadata Validation from Illumina Sample Sheet": {
         "content": [
             [
-                "test.metadata.yaml:md5,30d8db3b974629d16d44f4c1e7bd09bd"
+                "test.metadata.yaml:md5,60922ac5e38f7db7702adc78263e954f"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "23.04.2"
         },
-        "timestamp": "2024-12-18T09:37:34.32733"
+        "timestamp": "2024-12-23T14:25:21.951292"
     },
     "Templated Group Definition": {
         "content": [
             [
-                "test.metadata.yaml:md5,5acde27b26184c3fff723d9e5e5bd381"
+                "test.metadata.yaml:md5,c5ba8cf8eebd580c81f7b4314c4efd74"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "23.04.2"
         },
-        "timestamp": "2024-12-18T15:05:03.815062"
+        "timestamp": "2024-12-23T14:27:04.466647"
     },
     "Metadata Validation from CSV": {
         "content": [
             [
-                "test.metadata.yaml:md5,896a41f0c333431c385a63a0358cbd46"
+                "test.metadata.yaml:md5,e835e11d40cd905cc896d6308945e69e"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "23.04.2"
         },
-        "timestamp": "2024-12-18T15:04:56.572938"
+        "timestamp": "2024-12-23T14:25:36.676735"
     }
 }

@@ -2,13 +2,13 @@
     "Raw CSV Samples Parsing": {
         "content": [
             [
-                "test.parsed-metadata.yaml:md5,1e05f9748fa730a0ddd92c499aff3b1f"
+                "parsed-metadata.yaml:md5,1e05f9748fa730a0ddd92c499aff3b1f"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "23.04.2"
         },
-        "timestamp": "2024-12-18T09:36:56.390293"
+        "timestamp": "2024-12-20T11:17:23.354991"
     }
 }
