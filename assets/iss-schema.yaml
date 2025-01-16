@@ -12,7 +12,9 @@ samples:
     - group
     - replicate
     - representation
-    - sample
+    - name: sample
+      aliases:
+        - sample_name
 
   optional:
     - reference

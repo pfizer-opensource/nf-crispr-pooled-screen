@@ -37,6 +37,35 @@ nextflow_workflow {
         }
     }
 
+    test("Load Metadata from Illumina Sample Sheet with Standard Aliases") {
+        tag "load_metadata_illumina_aliases"
+
+        when {
+            params {
+                metadata        = "${baseDir}/${testDataDir}/metadata/pooled_screen_meta_ilmn_samplesheet_aliases.csv"
+                metadata_format = "illumina"
+                fastq_dir       = "${baseDir}/${testDataDir}/testdata"
+                prefix          = "test"
+            }
+
+            workflow {
+                """
+                input[0] = params.metadata
+                input[1] = params.metadata_format
+                input[2] = params.fastq_dir
+                input[3] = params.prefix
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.meta_yaml).match() },
+            )
+        }
+    }
+
     test("Load Metadata from CSV") {
         tag "load_metadata_csv"
 
